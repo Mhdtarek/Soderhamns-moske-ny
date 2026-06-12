@@ -53,4 +53,16 @@ class PrayerTimesRemoteDs {
       throw const ParseException();
     }
   }
+
+  Future<int> getYear() async {
+    try {
+      final response = await dioClient.get('/api/getYear');
+      final data = response.data as Map<String, dynamic>;
+      return data['Year'] as int;
+    } on DioException {
+      throw const NetworkException();
+    } catch (_) {
+      throw const ParseException();
+    }
+  }
 }

@@ -43,3 +43,27 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Generated files
+*.freezed.dart
+*.g.dart
+
+# Environment config (only .example files should be tracked)
+env/*.json
+
+# Android signing
+android/key.properties
+*.jks
+*.keystore
+
+# iOS
+ios/**/*.xcworkspace
+ios/**/xcuserdata/
+ios/Pods/
+
+# Firebase config
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Coverage
+coverage/

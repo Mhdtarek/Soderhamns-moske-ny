@@ -1,15 +1,19 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:soderhamns_moske_app/data/models/prayer_day.dart';
 import 'package:soderhamns_moske_app/core/error/app_exception.dart';
 
 class PrayerTimesLocalDs {
   static const _boxName = 'prayer_times';
+  static const _yearKey = 'prayer_data_year';
   late Box<String> _box;
+  late SharedPreferences _prefs;
 
   Future<void> init() async {
     _box = await Hive.openBox<String>(_boxName);
+    _prefs = await SharedPreferences.getInstance();
   }
 
   Future<void> loadFromAssets() async {
@@ -41,5 +45,13 @@ class PrayerTimesLocalDs {
   Future<void> cacheMonth(int month, List<PrayerDay> data) async {
     final raw = jsonEncode(data.map((d) => d.toJson()).toList());
     await _box.put('month_$month', raw);
+  }
+
+  int? getCachedYear() {
+    return _prefs.getInt(_yearKey);
+  }
+
+  Future<void> setCachedYear(int year) async {
+    await _prefs.setInt(_yearKey, year);
   }
 }

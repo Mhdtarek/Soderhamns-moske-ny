@@ -36,3 +36,7 @@ final yesterdayPrayerTimesProvider = FutureProvider<PrayerDay>((ref) async {
 final tomorrowPrayerTimesProvider = FutureProvider<PrayerDay>((ref) async {
   return ref.watch(prayerTimesRepositoryProvider).getTomorrow();
 });
+
+final prayerDataSyncProvider = FutureProvider<bool>((ref) async {
+  return ref.watch(prayerTimesRepositoryProvider).syncIfNeeded();
+});

@@ -43,4 +43,15 @@ class PrayerTimesRepository {
       await local.cacheMonth(month, data);
     }
   }
+
+  Future<bool> syncIfNeeded() async {
+    final remoteYear = await remote.getYear();
+    final cachedYear = local.getCachedYear();
+
+    if (cachedYear == remoteYear) return false;
+
+    await syncFromRemote();
+    await local.setCachedYear(remoteYear);
+    return true;
+  }
 }
