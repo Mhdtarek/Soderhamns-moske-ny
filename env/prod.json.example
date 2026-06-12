@@ -1,0 +1,4 @@
+{
+  "PRAYER_API_BASE": "https://soderhamns-moske.netlify.app",
+  "ALQURAN_API_BASE": "https://api.alquran.cloud/v1"
+}
