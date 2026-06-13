@@ -8,6 +8,8 @@ import 'package:soderhamns_moske_app/features/home/providers/home_providers.dart
 import 'package:soderhamns_moske_app/data/models/ayah.dart';
 import 'package:soderhamns_moske_app/data/models/next_prayer_countdown.dart';
 import 'package:soderhamns_moske_app/features/ayah/providers/ayah_providers.dart';
+import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
+import 'package:soderhamns_moske_app/shared/widgets/loading_view.dart';
 import 'package:soderhamns_moske_app/shared/widgets/prayer_times_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -70,6 +72,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 countdown: countdown,
                 hijriDate: hijriDate,
                 gregorianDate: gregorianDate,
+                onRetry: () => ref.invalidate(nextPrayerCountdownProvider),
               ),
             ),
           ),
@@ -80,15 +83,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: dailyAyah.when(
                 loading: () => const SizedBox(
                   height: 60,
-                  child: Center(
-                    child: SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
+                  child: LoadingView(),
                 ),
-                error: (e, _) => _buildAyahFallback(),
+                error: (_, __) => ErrorView(
+                  message: 'Kunde inte ladda dagens vers',
+                  onRetry: () => ref.invalidate(dailyAyahProvider),
+                ),
                 data: (ayah) => _buildAyahContent(ayah),
               ),
             ),
@@ -97,15 +97,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           todayTimes.when(
             loading: () => const SizedBox(
               height: 60,
-              child: Center(
-                child: SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
+              child: LoadingView(),
             ),
-            error: (e, _) => const SizedBox.shrink(),
+            error: (_, __) => ErrorView(
+              message: 'Kunde inte ladda bönetider',
+              onRetry: () => ref.invalidate(todayPrayerTimesProvider),
+            ),
             data: (day) => PrayerTimesCard(day: day, isToday: true),
           ),
         ],
@@ -152,23 +149,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-
-  Widget _buildAyahFallback() {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Dagens vers',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text('Kunde inte ladda dagens vers'),
-      ],
-    );
-  }
 }
 
 class _CountdownContent extends StatelessWidget {
@@ -176,11 +156,13 @@ class _CountdownContent extends StatelessWidget {
     required this.countdown,
     required this.hijriDate,
     required this.gregorianDate,
+    this.onRetry,
   });
 
   final AsyncValue<NextPrayerCountdown> countdown;
   final String hijriDate;
   final String gregorianDate;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -242,17 +224,11 @@ class _CountdownContent extends StatelessWidget {
         countdown.when(
           loading: () => const SizedBox(
             height: 32,
-            child: Center(
-              child: SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
+            child: LoadingView(),
           ),
-          error: (_, __) => Text(
-            'Kunde inte ladda bönetider',
-            style: TextStyle(color: theme.colorScheme.error),
+          error: (_, __) => ErrorView(
+            message: 'Kunde inte ladda bönetider',
+            onRetry: onRetry,
           ),
           data: (data) {
             return Column(
