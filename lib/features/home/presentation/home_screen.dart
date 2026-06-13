@@ -6,6 +6,7 @@ import 'package:soderhamns_moske_app/core/theme/app_colors.dart';
 import 'package:soderhamns_moske_app/features/prayer_times/providers/prayer_times_providers.dart';
 import 'package:soderhamns_moske_app/features/home/providers/home_providers.dart';
 import 'package:soderhamns_moske_app/data/models/next_prayer_countdown.dart';
+import 'package:soderhamns_moske_app/shared/widgets/prayer_times_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -52,6 +53,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final hijriDate = ref.watch(hijriDateProvider);
     final gregorianDate = ref.watch(gregorianDateProvider);
     final countdown = ref.watch(nextPrayerCountdownProvider);
+    final todayTimes = ref.watch(todayPrayerTimesProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Söderhamns Moské')),
@@ -67,6 +69,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 gregorianDate: gregorianDate,
               ),
             ),
+          ),
+          const SizedBox(height: 8),
+          todayTimes.when(
+            loading: () => const SizedBox(
+              height: 60,
+              child: Center(
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+            error: (e, _) => const SizedBox.shrink(),
+            data: (day) => PrayerTimesCard(day: day, isToday: true),
           ),
         ],
       ),
