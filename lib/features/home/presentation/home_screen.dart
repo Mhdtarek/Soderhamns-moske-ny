@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:soderhamns_moske_app/core/theme/app_colors.dart';
 import 'package:soderhamns_moske_app/features/prayer_times/providers/prayer_times_providers.dart';
 import 'package:soderhamns_moske_app/features/home/providers/home_providers.dart';
+import 'package:soderhamns_moske_app/data/models/ayah.dart';
 import 'package:soderhamns_moske_app/data/models/next_prayer_countdown.dart';
+import 'package:soderhamns_moske_app/features/ayah/providers/ayah_providers.dart';
 import 'package:soderhamns_moske_app/shared/widgets/prayer_times_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -53,6 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final hijriDate = ref.watch(hijriDateProvider);
     final gregorianDate = ref.watch(gregorianDateProvider);
     final countdown = ref.watch(nextPrayerCountdownProvider);
+    final dailyAyah = ref.watch(dailyAyahProvider);
     final todayTimes = ref.watch(todayPrayerTimesProvider);
 
     return Scaffold(
@@ -67,6 +70,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 countdown: countdown,
                 hijriDate: hijriDate,
                 gregorianDate: gregorianDate,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: dailyAyah.when(
+                loading: () => const SizedBox(
+                  height: 60,
+                  child: Center(
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+                error: (e, _) => _buildAyahFallback(),
+                data: (ayah) => _buildAyahContent(ayah),
               ),
             ),
           ),
@@ -87,6 +110,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAyahContent(Ayah ayah) {
+    final theme = Theme.of(context);
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            ayah.arabicText,
+            style: theme.textTheme.titleLarge?.copyWith(
+              height: 1.6,
+            ),
+            textAlign: TextAlign.right,
+          ),
+          const SizedBox(height: 12),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              ayah.translation,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              '${ayah.surahEnglishName} ${ayah.surahNumber}:${ayah.numberInSurah}',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAyahFallback() {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Dagens vers',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text('Kunde inte ladda dagens vers'),
+      ],
     );
   }
 }
