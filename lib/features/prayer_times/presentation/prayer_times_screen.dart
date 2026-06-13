@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:soderhamns_moske_app/core/theme/app_colors.dart';
-import 'package:soderhamns_moske_app/data/models/prayer_day.dart';
 import 'package:soderhamns_moske_app/features/prayer_times/providers/prayer_times_providers.dart';
 import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
 import 'package:soderhamns_moske_app/shared/widgets/loading_view.dart';
+import 'package:soderhamns_moske_app/shared/widgets/prayer_times_card.dart';
 
 class PrayerTimesScreen extends ConsumerStatefulWidget {
   const PrayerTimesScreen({super.key});
@@ -53,7 +53,7 @@ class _PrayerTimesScreenState extends ConsumerState<PrayerTimesScreen>
         data: (day) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _PrayerTimesCard(day: day, isToday: tabIndex == 1),
+            PrayerTimesCard(day: day, isToday: tabIndex == 1),
             const SizedBox(height: 16),
             const _WeekTable(),
             const SizedBox(height: 16),
@@ -70,220 +70,6 @@ class _PrayerTimesScreenState extends ConsumerState<PrayerTimesScreen>
   }
 }
 
-class _PrayerTimesCard extends StatelessWidget {
-  final PrayerDay day;
-  final bool isToday;
-
-  const _PrayerTimesCard({required this.day, this.isToday = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final currentHour = now.hour;
-    final currentMinute = now.minute;
-
-    String? currentPrayer;
-    if (isToday) {
-      final fajrParts = day.fajr.split(':');
-      final shurukParts = day.shuruk.split(':');
-      final dhohrParts = day.dhohr.split(':');
-      final asrParts = day.asr.split(':');
-      final maghribParts = day.maghrib.split(':');
-      final ishaParts = day.isha.split(':');
-
-      final fajrMin = int.parse(fajrParts[0]) * 60 + int.parse(fajrParts[1]);
-      final shurukMin = int.parse(shurukParts[0]) * 60 + int.parse(shurukParts[1]);
-      final dhohrMin = int.parse(dhohrParts[0]) * 60 + int.parse(dhohrParts[1]);
-      final asrMin = int.parse(asrParts[0]) * 60 + int.parse(asrParts[1]);
-      final maghribMin = int.parse(maghribParts[0]) * 60 + int.parse(maghribParts[1]);
-      final ishaMin = int.parse(ishaParts[0]) * 60 + int.parse(ishaParts[1]);
-      final nowMin = currentHour * 60 + currentMinute;
-
-      if (nowMin >= fajrMin && nowMin < shurukMin) {
-        currentPrayer = 'Fajr';
-      } else if (nowMin >= dhohrMin && nowMin < asrMin) {
-        currentPrayer = 'Dhohr';
-      } else if (nowMin >= asrMin && nowMin < maghribMin) {
-        currentPrayer = 'Asr';
-      } else if (nowMin >= maghribMin && nowMin < ishaMin) {
-        currentPrayer = 'Maghrib';
-      } else if (nowMin >= ishaMin) {
-        currentPrayer = 'Isha';
-      }
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _PrayerRow(
-              name: 'Fajr',
-              time: day.fajr,
-              status: _getStatus('Fajr', day.fajr, currentPrayer, isToday),
-            ),
-            const Divider(),
-            _PrayerRow(
-              name: 'Shuruk',
-              time: day.shuruk,
-              status: PrayerStatus.none,
-            ),
-            const Divider(),
-            _PrayerRow(
-              name: 'Dhohr',
-              time: day.dhohr,
-              status: _getStatus('Dhohr', day.dhohr, currentPrayer, isToday),
-            ),
-            const Divider(),
-            _PrayerRow(
-              name: 'Asr',
-              time: day.asr,
-              status: _getStatus('Asr', day.asr, currentPrayer, isToday),
-            ),
-            const Divider(),
-            _PrayerRow(
-              name: 'Maghrib',
-              time: day.maghrib,
-              status: _getStatus('Maghrib', day.maghrib, currentPrayer, isToday),
-            ),
-            const Divider(),
-            _PrayerRow(
-              name: 'Isha',
-              time: day.isha,
-              status: _getStatus('Isha', day.isha, currentPrayer, isToday),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  PrayerStatus _getStatus(String name, String time, String? currentPrayer, bool isToday) {
-    if (!isToday) return PrayerStatus.none;
-    if (currentPrayer == null) return PrayerStatus.upcoming;
-    if (name == currentPrayer) return PrayerStatus.current;
-    
-    final prayers = ['Fajr', 'Shuruk', 'Dhohr', 'Asr', 'Maghrib', 'Isha'];
-    final currentIndex = prayers.indexOf(currentPrayer);
-    final thisIndex = prayers.indexOf(name);
-    
-    if (thisIndex < currentIndex) return PrayerStatus.passed;
-    return PrayerStatus.upcoming;
-  }
-}
-
-enum PrayerStatus { none, passed, current, upcoming }
-
-class _PrayerRow extends StatelessWidget {
-  final String name;
-  final String time;
-  final PrayerStatus status;
-
-  const _PrayerRow({
-    required this.name,
-    required this.time,
-    this.status = PrayerStatus.none,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final highlightColor = isDark ? AppColors.goldLight : AppColors.gold;
-    final isCurrent = status == PrayerStatus.current;
-    final isPassed = status == PrayerStatus.passed;
-    final isUpcoming = status == PrayerStatus.upcoming;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: isCurrent
-          ? BoxDecoration(
-              color: highlightColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-              border: Border(
-                left: BorderSide(color: highlightColor, width: 4),
-              ),
-            )
-          : null,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Text(
-                name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: isCurrent ? FontWeight.bold : null,
-                      color: isPassed ? Colors.grey : null,
-                    ),
-              ),
-              if (isPassed) ...[
-                const SizedBox(width: 6),
-                const Icon(Icons.check, size: 16, color: Colors.grey),
-              ],
-              if (isCurrent) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: highlightColor,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'Be nu!',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.black : Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-              if (isUpcoming) ...[
-                const SizedBox(width: 6),
-                Text(
-                  _getTimeRemaining(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  ),
-                ),
-              ],
-            ],
-          ),
-          Text(
-            time,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: isCurrent ? FontWeight.bold : null,
-                  color: isPassed ? Colors.grey : null,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getTimeRemaining() {
-    final now = DateTime.now();
-    final parts = time.split(':');
-    final prayerTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      int.parse(parts[0]),
-      int.parse(parts[1]),
-    );
-    final diff = prayerTime.difference(now);
-    if (diff.isNegative) return '';
-    
-    final hours = diff.inHours;
-    final minutes = diff.inMinutes % 60;
-    
-    if (hours > 0) {
-      return '${hours}h';
-    }
-    return '${minutes}m';
-  }
-}
 
 class _WeekTable extends ConsumerStatefulWidget {
   const _WeekTable();

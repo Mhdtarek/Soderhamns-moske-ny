@@ -1,0 +1,10 @@
+{
+  "number": 1,
+  "surahNumber": 1,
+  "surahName": "الفاتحة",
+  "surahEnglishName": "Al-Faatiha",
+  "numberInSurah": 1,
+  "arabicText": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+  "translation": "I GUDS, DEN NÅDERIKES, DEN BARMHÄRTIGES NAMN",
+  "dateKey": "fallback"
+}

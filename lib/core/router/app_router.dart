@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:soderhamns_moske_app/shared/widgets/offline_banner.dart';
 import 'routes.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/prayer_times/presentation/prayer_times_screen.dart';
@@ -32,7 +33,12 @@ final goRouter = GoRouter(
       builder: (context, state, child) {
         final selectedIndex = _calculateSelectedIndex(context);
         return Scaffold(
-          body: child,
+          body: Column(
+            children: [
+              const OfflineBanner(),
+              Expanded(child: child),
+            ],
+          ),
           bottomNavigationBar: NavigationBar(
             selectedIndex: selectedIndex,
             onDestinationSelected: (index) {
