@@ -3,14 +3,28 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:soderhamns_moske_app/core/theme/app_colors.dart';
-import 'package:soderhamns_moske_app/features/prayer_times/providers/prayer_times_providers.dart';
-import 'package:soderhamns_moske_app/features/home/providers/home_providers.dart';
 import 'package:soderhamns_moske_app/data/models/ayah.dart';
 import 'package:soderhamns_moske_app/data/models/next_prayer_countdown.dart';
+import 'package:soderhamns_moske_app/data/models/prayer_day.dart';
 import 'package:soderhamns_moske_app/features/ayah/providers/ayah_providers.dart';
+import 'package:soderhamns_moske_app/features/home/providers/home_providers.dart';
+import 'package:soderhamns_moske_app/features/prayer_times/providers/prayer_times_providers.dart';
 import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
 import 'package:soderhamns_moske_app/shared/widgets/loading_view.dart';
-import 'package:soderhamns_moske_app/shared/widgets/prayer_times_card.dart';
+
+const _bg = Color(0xFFF0ECE4);
+const _grey888 = Color(0xFF888888);
+const _grey555 = Color(0xFF555555);
+const _grey333 = Color(0xFF333333);
+const _grey666 = Color(0xFF666666);
+const _dark = Color(0xFF2C2A22);
+const _green = Color(0xFF4A7C59);
+const _dividerLight = Color(0x1A000000);
+const _dividerMedium = Color(0x12000000);
+const _tint = Color(0x05000000);
+const _activeBg = Color(0xFFF5F0E4);
+
+const _prayerOrder = ['Fajr', 'Shuruk', 'Dhohr', 'Asr', 'Maghrib', 'Isha'];
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -61,88 +75,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final todayTimes = ref.watch(todayPrayerTimesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Söderhamns Moské')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: _CountdownContent(
-                countdown: countdown,
-                hijriDate: hijriDate,
-                gregorianDate: gregorianDate,
-                onRetry: () => ref.invalidate(nextPrayerCountdownProvider),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: dailyAyah.when(
-                loading: () => const SizedBox(
-                  height: 60,
-                  child: LoadingView(),
-                ),
-                error: (_, __) => ErrorView(
-                  message: 'Kunde inte ladda dagens vers',
-                  onRetry: () => ref.invalidate(dailyAyahProvider),
-                ),
-                data: (ayah) => _buildAyahContent(ayah),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          todayTimes.when(
-            loading: () => const SizedBox(
-              height: 60,
-              child: LoadingView(),
-            ),
-            error: (_, __) => ErrorView(
-              message: 'Kunde inte ladda bönetider',
-              onRetry: () => ref.invalidate(todayPrayerTimesProvider),
-            ),
-            data: (day) => PrayerTimesCard(day: day, isToday: true),
-          ),
-        ],
+      backgroundColor: _bg,
+      appBar: AppBar(
+        backgroundColor: _bg,
+        title: const Text('Söderhamns Moské'),
       ),
-    );
-  }
-
-  Widget _buildAyahContent(Ayah ayah) {
-    final theme = Theme.of(context);
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: ListView(
+        padding: const EdgeInsets.only(top: 0, bottom: 16),
         children: [
-          Text(
-            ayah.arabicText,
-            style: theme.textTheme.titleLarge?.copyWith(
-              height: 1.6,
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: _PrayerHeroCard(
+              gregorianDate: gregorianDate,
+              hijriDate: hijriDate,
+              countdown: countdown,
+              onRetry: () => ref.invalidate(nextPrayerCountdownProvider),
             ),
-            textAlign: TextAlign.right,
           ),
           const SizedBox(height: 12),
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Text(
-              ayah.translation,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.4,
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: _AyahCard(dailyAyah: dailyAyah),
           ),
-          const SizedBox(height: 8),
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Text(
-              '${ayah.surahEnglishName} ${ayah.surahNumber}:${ayah.numberInSurah}',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: _PrayerListCard(
+              todayTimes: todayTimes,
+              currentPrayerName:
+                  countdown.valueOrNull?.currentPrayerName,
+              onRetry: () => ref.invalidate(todayPrayerTimesProvider),
             ),
           ),
         ],
@@ -151,141 +114,457 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class _CountdownContent extends StatelessWidget {
-  const _CountdownContent({
-    required this.countdown,
-    required this.hijriDate,
+// ─── Card 1: Prayer Hero ────────────────────────────────────────
+
+class _PrayerHeroCard extends StatelessWidget {
+  const _PrayerHeroCard({
     required this.gregorianDate,
+    required this.hijriDate,
+    required this.countdown,
     this.onRetry,
   });
 
-  final AsyncValue<NextPrayerCountdown> countdown;
-  final String hijriDate;
   final String gregorianDate;
+  final String hijriDate;
+  final AsyncValue<NextPrayerCountdown> countdown;
   final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final gold = isDark ? AppColors.goldLight : AppColors.gold;
     final data = countdown.valueOrNull;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Date section — always visible
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Zone 1 — Date row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  gregorianDate,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  hijriDate,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            if (data?.currentPrayerName != null)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: gold,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  'Be nu!',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.black : Colors.white,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const Divider(height: 16),
-        // Countdown section — loading / error / data
-        countdown.when(
-          loading: () => const SizedBox(
-            height: 32,
-            child: LoadingView(),
-          ),
-          error: (_, __) => ErrorView(
-            message: 'Kunde inte ladda bönetider',
-            onRetry: onRetry,
-          ),
-          data: (data) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (data.currentPrayerName != null) ...[
-                  Text(
-                    'Aktuell bön',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    data.currentPrayerName!,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Divider(height: 16),
-                ],
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.access_time,
-                      size: 16,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Nästa: ${data.nextPrayerName}${data.isTomorrow ? ' (imorgon)' : ''}',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ),
                     Text(
-                      _formatDuration(data.remaining),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      gregorianDate,
+                      style: const TextStyle(
+                          fontSize: 12, color: _grey888),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      hijriDate,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: _grey555,
                       ),
                     ),
                   ],
                 ),
+                const Spacer(),
+                if (data?.currentPrayerName != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: gold,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'Be nu!',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.black : Colors.white,
+                      ),
+                    ),
+                  ),
               ],
-            );
-          },
-        ),
-      ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 0.5, color: _dividerLight),
+          // Zone 2 — Current prayer + countdown
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: countdown.when(
+              loading: () => const SizedBox(
+                  height: 56, child: Center(child: LoadingView())),
+              error: (_, __) => ErrorView(
+                message: 'Kunde inte ladda bönetider',
+                onRetry: onRetry,
+              ),
+              data: (data) {
+                final hasCurrent =
+                    data.currentPrayerName != null;
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            hasCurrent
+                                ? 'Aktuell bön'
+                                : 'Nästa bön',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: _grey888,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            hasCurrent
+                                ? data.currentPrayerName!
+                                : data.nextPrayerName,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w500,
+                              color: _dark,
+                              height: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.end,
+                      children: [
+                        if (hasCurrent)
+                          Text(
+                            'Nästa: ${data.nextPrayerName}',
+                            style: const TextStyle(
+                                fontSize: 12, color: _grey888),
+                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatCountdown(data.remaining),
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w500,
+                            color: _green,
+                            fontFeatures: [
+                              FontFeature.tabularFigures(),
+                            ],
+                            height: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const Divider(height: 1, thickness: 0.5, color: _dividerLight),
+          // Zone 3 — Next prayers hint
+          countdown.when(
+            loading: () => const SizedBox(height: 36),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (data) {
+              return Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(color: _tint),
+                child: Row(
+                  children: [
+                    const Icon(Icons.access_time,
+                        size: 14, color: _grey888),
+                    const SizedBox(width: 8),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: data.nextPrayerName,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: _grey333,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' kl. ${data.nextPrayerTime}',
+                            style: const TextStyle(
+                                fontSize: 13, color: _grey666),
+                          ),
+                          const TextSpan(
+                            text: ' — sedan ',
+                            style: TextStyle(
+                                fontSize: 13, color: _grey666),
+                          ),
+                          TextSpan(
+                            text: data.nextNextPrayerName,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: _grey333,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' kl. ${data.nextNextPrayerTime}',
+                            style: const TextStyle(
+                                fontSize: 13, color: _grey666),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  static String _formatDuration(Duration d) {
+  static String _formatCountdown(Duration d) {
     final positive = d.isNegative ? Duration.zero : d;
-    final h = positive.inHours;
-    final m = positive.inMinutes % 60;
-    final s = positive.inSeconds % 60;
-    return '${h}h ${m}m ${s}s';
+    final h = positive.inHours.toString().padLeft(2, '0');
+    final m =
+        (positive.inMinutes % 60).toString().padLeft(2, '0');
+    final s =
+        (positive.inSeconds % 60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
+  }
+}
+
+// ─── Card 2: Ayah ───────────────────────────────────────────────
+
+class _AyahCard extends StatelessWidget {
+  const _AyahCard({required this.dailyAyah});
+
+  final AsyncValue<Ayah> dailyAyah;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: dailyAyah.when(
+        loading: () =>
+            const SizedBox(height: 60, child: LoadingView()),
+        error: (_, __) => const SizedBox(height: 60, child: LoadingView()),
+        data: (ayah) {
+          final theme = Theme.of(context);
+          return Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ayah.arabicText,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      height: 1.8,
+                      fontSize: 17,
+                    ),
+                    textAlign: TextAlign.right,
+                    textDirection: TextDirection.rtl,
+                  ),
+                  const SizedBox(height: 10),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      ayah.translation,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: _grey666,
+                        height: 1.6,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '${ayah.surahEnglishName} ${ayah.surahNumber}:${ayah.numberInSurah}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: _grey888,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─── Card 3: Prayer List ────────────────────────────────────────
+
+class _PrayerListCard extends StatelessWidget {
+  const _PrayerListCard({
+    required this.todayTimes,
+    required this.currentPrayerName,
+    this.onRetry,
+  });
+
+  final AsyncValue<PrayerDay> todayTimes;
+  final String? currentPrayerName;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gold = isDark ? AppColors.goldLight : AppColors.gold;
+
+    return todayTimes.when(
+      loading: () => Card(
+        child:
+            const SizedBox(height: 60, child: LoadingView()),
+      ),
+      error: (_, __) => Card(
+        child: ErrorView(
+          message: 'Kunde inte ladda bönetider',
+          onRetry: onRetry,
+        ),
+      ),
+      data: (day) {
+        final times = {
+          'Fajr': day.fajr,
+          'Shuruk': day.shuruk,
+          'Dhohr': day.dhohr,
+          'Asr': day.asr,
+          'Maghrib': day.maghrib,
+          'Isha': day.isha,
+        };
+
+        final List<Widget> rows = [];
+        for (var i = 0; i < _prayerOrder.length; i++) {
+          final name = _prayerOrder[i];
+          final time = times[name]!;
+          final isCurrent = name == currentPrayerName;
+          final isPassed =
+              _isPassed(time, name, currentPrayerName);
+          final isUpcoming = !isPassed && !isCurrent;
+
+          rows.add(
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  vertical: 9, horizontal: 16),
+              decoration: isCurrent
+                  ? const BoxDecoration(color: _activeBg)
+                  : null,
+              child: Row(
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isCurrent
+                          ? FontWeight.w500
+                          : null,
+                      color: isPassed
+                          ? const Color(0xFFBBBBBB)
+                          : isCurrent
+                              ? _dark
+                              : _grey333,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  if (isPassed)
+                    const Icon(Icons.check,
+                        size: 14, color: _grey888),
+                  if (isCurrent)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: gold,
+                        borderRadius:
+                            BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Be nu!',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? Colors.black
+                              : Colors.white,
+                        ),
+                      ),
+                    ),
+                  if (isUpcoming)
+                    Text(
+                      _timeRemaining(time),
+                      style: const TextStyle(
+                          fontSize: 11, color: _grey888),
+                    ),
+                  const Spacer(),
+                  Text(
+                    time,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isCurrent
+                          ? FontWeight.w500
+                          : null,
+                      color: isPassed
+                          ? const Color(0xFFCCCCCC)
+                          : isCurrent
+                              ? _dark
+                              : _grey555,
+                      fontFeatures: const [
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+
+          if (i < _prayerOrder.length - 1) {
+            rows.add(const Divider(
+                height: 1,
+                thickness: 0.5,
+                color: _dividerMedium));
+          }
+        }
+
+        return Card(child: Column(children: rows));
+      },
+    );
+  }
+
+  static bool _isPassed(String time, String name, String? current) {
+    if (name == current) return false;
+    final now = DateTime.now();
+    final nowMin = now.hour * 60 + now.minute;
+    final parts = time.split(':');
+    final prayerMin = int.parse(parts[0]) * 60 + int.parse(parts[1]);
+    return prayerMin < nowMin;
+  }
+
+  static String _timeRemaining(String time) {
+    final now = DateTime.now();
+    final parts = time.split(':');
+    final prayerTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+    );
+    final diff = prayerTime.difference(now);
+    if (diff.isNegative) return '';
+    final hours = diff.inHours;
+    if (hours > 0) return '${hours}h';
+    return '${diff.inMinutes}m';
   }
 }

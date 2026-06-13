@@ -106,11 +106,31 @@ NextPrayerCountdown _calculateNextPrayer(PrayerDay today, PrayerDay tomorrow) {
 
   final remaining = nextDateTime.difference(now);
 
+  final String nextNextPrayerName;
+  final String nextNextPrayerTime;
+
+  if (isTomorrow) {
+    nextNextPrayerName = 'Shuruk';
+    nextNextPrayerTime = tomorrow.shuruk;
+  } else {
+    final nextIndex = _prayerOrder.indexOf(nextPrayerName);
+    final nextNextIndex = nextIndex + 1;
+    if (nextNextIndex < _prayerOrder.length) {
+      nextNextPrayerName = _prayerOrder[nextNextIndex];
+      nextNextPrayerTime = timeStrings[nextNextPrayerName]!;
+    } else {
+      nextNextPrayerName = 'Fajr';
+      nextNextPrayerTime = tomorrow.fajr;
+    }
+  }
+
   return NextPrayerCountdown(
     currentPrayerName: currentPrayerName,
     nextPrayerName: nextPrayerName,
     nextPrayerTime: isTomorrow ? tomorrow.fajr : timeStrings[nextPrayerName]!,
     remaining: remaining,
     isTomorrow: isTomorrow,
+    nextNextPrayerName: nextNextPrayerName,
+    nextNextPrayerTime: nextNextPrayerTime,
   );
 }

@@ -10,5 +10,7 @@ class NextPrayerCountdown with _$NextPrayerCountdown {
     required String nextPrayerTime,
     required Duration remaining,
     required bool isTomorrow,
+    required String nextNextPrayerName,
+    required String nextNextPrayerTime,
   }) = _NextPrayerCountdown;
 }
