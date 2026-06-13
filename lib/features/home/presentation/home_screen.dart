@@ -1,13 +1,41 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:soderhamns_moske_app/core/theme/app_colors.dart';
 import 'package:soderhamns_moske_app/features/prayer_times/providers/prayer_times_providers.dart';
 import 'package:soderhamns_moske_app/features/home/providers/home_providers.dart';
+import 'package:soderhamns_moske_app/data/models/next_prayer_countdown.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        ref.invalidate(nextPrayerCountdownProvider);
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.listen<AsyncValue<bool>>(prayerDataSyncProvider, (_, state) {
       state.whenData((updated) {
         if (updated && context.mounted) {
@@ -23,6 +51,7 @@ class HomeScreen extends ConsumerWidget {
 
     final hijriDate = ref.watch(hijriDateProvider);
     final gregorianDate = ref.watch(gregorianDateProvider);
+    final countdown = ref.watch(nextPrayerCountdownProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Söderhamns Moské')),
@@ -31,30 +60,159 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  Text(
-                    gregorianDate,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    hijriDate,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                ],
+              padding: const EdgeInsets.all(16),
+              child: _CountdownContent(
+                countdown: countdown,
+                hijriDate: hijriDate,
+                gregorianDate: gregorianDate,
               ),
             ),
           ),
         ],
       ),
     );
+  }
+}
+
+class _CountdownContent extends StatelessWidget {
+  const _CountdownContent({
+    required this.countdown,
+    required this.hijriDate,
+    required this.gregorianDate,
+  });
+
+  final AsyncValue<NextPrayerCountdown> countdown;
+  final String hijriDate;
+  final String gregorianDate;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final gold = isDark ? AppColors.goldLight : AppColors.gold;
+    final data = countdown.valueOrNull;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Date section — always visible
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  gregorianDate,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  hijriDate,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            if (data?.currentPrayerName != null)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: gold,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Be nu!',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.black : Colors.white,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const Divider(height: 16),
+        // Countdown section — loading / error / data
+        countdown.when(
+          loading: () => const SizedBox(
+            height: 32,
+            child: Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+          error: (_, __) => Text(
+            'Kunde inte ladda bönetider',
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
+          data: (data) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (data.currentPrayerName != null) ...[
+                  Text(
+                    'Aktuell bön',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    data.currentPrayerName!,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Divider(height: 16),
+                ],
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time,
+                      size: 16,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Nästa: ${data.nextPrayerName}${data.isTomorrow ? ' (imorgon)' : ''}',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                    Text(
+                      _formatDuration(data.remaining),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  static String _formatDuration(Duration d) {
+    final positive = d.isNegative ? Duration.zero : d;
+    final h = positive.inHours;
+    final m = positive.inMinutes % 60;
+    final s = positive.inSeconds % 60;
+    return '${h}h ${m}m ${s}s';
   }
 }
