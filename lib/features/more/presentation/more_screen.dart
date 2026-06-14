@@ -10,6 +10,9 @@ class MoreScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Mer')),
       body: ListView(
+        physics: Theme.of(context).platform == TargetPlatform.iOS
+            ? const BouncingScrollPhysics()
+            : null,
         children: [
           ListTile(
             leading: const Icon(Icons.favorite),

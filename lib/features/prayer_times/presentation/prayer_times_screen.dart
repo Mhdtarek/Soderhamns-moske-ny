@@ -51,6 +51,9 @@ class _PrayerTimesScreenState extends ConsumerState<PrayerTimesScreen>
       ),
       body: asyncDay.when(
         data: (day) => ListView(
+          physics: Theme.of(context).platform == TargetPlatform.iOS
+              ? const BouncingScrollPhysics()
+              : null,
           padding: const EdgeInsets.all(16),
           children: [
             PrayerTimesCard(day: day, isToday: tabIndex == 1),
@@ -104,33 +107,49 @@ class _WeekTableState extends ConsumerState<_WeekTable> {
                     'Veckovis',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: const Icon(Icons.expand_more),
+                  ),
                 ],
               ),
             ),
           ),
-          if (_expanded) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: DropdownButton<int>(
-                value: _selectedWeek,
-                isExpanded: true,
-                items: List.generate(getWeeksInYear(DateTime.now().year), (i) => i + 1)
-                    .map((w) => DropdownMenuItem(
-                          value: w,
-                          child: Text('Vecka $w'),
-                        ))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedWeek = v!),
-              ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: DropdownButton<int>(
+                    value: _selectedWeek,
+                    isExpanded: true,
+                    items: List.generate(
+                        getWeeksInYear(DateTime.now().year), (i) => i + 1)
+                        .map((w) => DropdownMenuItem(
+                              value: w,
+                              child: Text('Vecka $w'),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedWeek = v!),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: _WeekData(week: _selectedWeek),
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: _WeekData(week: _selectedWeek),
-            ),
-            const SizedBox(height: 16),
-          ],
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 300),
+            sizeCurve: Curves.easeInOut,
+          ),
         ],
       ),
     );
@@ -259,33 +278,48 @@ class _MonthTableState extends ConsumerState<_MonthTable> {
                     'Månadsvis',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: const Icon(Icons.expand_more),
+                  ),
                 ],
               ),
             ),
           ),
-          if (_expanded) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: DropdownButton<int>(
-                value: _selectedMonth,
-                isExpanded: true,
-                items: List.generate(12, (i) => i + 1)
-                    .map((m) => DropdownMenuItem(
-                          value: m,
-                          child: Text(_monthName(m)),
-                        ))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedMonth = v!),
-              ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: DropdownButton<int>(
+                    value: _selectedMonth,
+                    isExpanded: true,
+                    items: List.generate(12, (i) => i + 1)
+                        .map((m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(_monthName(m)),
+                            ))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedMonth = v!),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: _MonthData(month: _selectedMonth),
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: _MonthData(month: _selectedMonth),
-            ),
-            const SizedBox(height: 16),
-          ],
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 300),
+            sizeCurve: Curves.easeInOut,
+          ),
         ],
       ),
     );

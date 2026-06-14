@@ -33,8 +33,13 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with SingleTickerProviderStateMixin {
   Timer? _timer;
+  late AnimationController _entryController;
+  late Animation<double> _heroFade, _heroSlide;
+  late Animation<double> _ayahFade, _ayahSlide;
+  late Animation<double> _listFade, _listSlide;
 
   @override
   void initState() {
@@ -45,11 +50,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         setState(() {});
       }
     });
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _heroFade = CurvedAnimation(
+      parent: _entryController,
+      curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+    );
+    _heroSlide = CurvedAnimation(
+      parent: _entryController,
+      curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+    );
+    _ayahFade = CurvedAnimation(
+      parent: _entryController,
+      curve: const Interval(0.2, 0.6, curve: Curves.easeOut),
+    );
+    _ayahSlide = CurvedAnimation(
+      parent: _entryController,
+      curve: const Interval(0.2, 0.6, curve: Curves.easeOut),
+    );
+    _listFade = CurvedAnimation(
+      parent: _entryController,
+      curve: const Interval(0.4, 0.8, curve: Curves.easeOut),
+    );
+    _listSlide = CurvedAnimation(
+      parent: _entryController,
+      curve: const Interval(0.4, 0.8, curve: Curves.easeOut),
+    );
+    _entryController.forward();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _entryController.dispose();
     super.dispose();
   }
 
@@ -81,31 +116,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: const Text('Söderhamns Moské'),
       ),
       body: ListView(
+        physics: Theme.of(context).platform == TargetPlatform.iOS
+            ? const BouncingScrollPhysics()
+            : null,
         padding: const EdgeInsets.only(top: 0, bottom: 16),
         children: [
           const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: _PrayerHeroCard(
-              gregorianDate: gregorianDate,
-              hijriDate: hijriDate,
-              countdown: countdown,
-              onRetry: () => ref.invalidate(nextPrayerCountdownProvider),
+          FadeTransition(
+            opacity: _heroFade,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.06),
+                end: Offset.zero,
+              ).animate(_heroSlide),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _PrayerHeroCard(
+                  gregorianDate: gregorianDate,
+                  hijriDate: hijriDate,
+                  countdown: countdown,
+                  onRetry: () =>
+                      ref.invalidate(nextPrayerCountdownProvider),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: _AyahCard(dailyAyah: dailyAyah),
+          FadeTransition(
+            opacity: _ayahFade,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.06),
+                end: Offset.zero,
+              ).animate(_ayahSlide),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _AyahCard(dailyAyah: dailyAyah),
+              ),
+            ),
           ),
           const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: _PrayerListCard(
-              todayTimes: todayTimes,
-              currentPrayerName:
-                  countdown.valueOrNull?.currentPrayerName,
-              onRetry: () => ref.invalidate(todayPrayerTimesProvider),
+          FadeTransition(
+            opacity: _listFade,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.06),
+                end: Offset.zero,
+              ).animate(_listSlide),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _PrayerListCard(
+                  todayTimes: todayTimes,
+                  currentPrayerName: countdown.valueOrNull?.currentPrayerName,
+                  onRetry: () =>
+                      ref.invalidate(todayPrayerTimesProvider),
+                ),
+              ),
             ),
           ),
         ],
@@ -151,8 +217,7 @@ class _PrayerHeroCard extends StatelessWidget {
                   children: [
                     Text(
                       gregorianDate,
-                      style: const TextStyle(
-                          fontSize: 12, color: _grey888),
+                      style: const TextStyle(fontSize: 12, color: _grey888),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -169,7 +234,9 @@ class _PrayerHeroCard extends StatelessWidget {
                 if (data?.currentPrayerName != null)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: gold,
                       borderRadius: BorderRadius.circular(4),
@@ -192,27 +259,25 @@ class _PrayerHeroCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: countdown.when(
               loading: () => const SizedBox(
-                  height: 56, child: Center(child: LoadingView())),
+                height: 56,
+                child: Center(child: LoadingView()),
+              ),
               error: (_, __) => ErrorView(
                 message: 'Kunde inte ladda bönetider',
                 onRetry: onRetry,
               ),
               data: (data) {
-                final hasCurrent =
-                    data.currentPrayerName != null;
+                final hasCurrent = data.currentPrayerName != null;
 
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            hasCurrent
-                                ? 'Aktuell bön'
-                                : 'Nästa bön',
+                            hasCurrent ? 'Aktuell bön' : 'Nästa bön',
                             style: const TextStyle(
                               fontSize: 11,
                               color: _grey888,
@@ -235,14 +300,15 @@ class _PrayerHeroCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         if (hasCurrent)
                           Text(
                             'Nästa: ${data.nextPrayerName}',
                             style: const TextStyle(
-                                fontSize: 12, color: _grey888),
+                              fontSize: 12,
+                              color: _grey888,
+                            ),
                           ),
                         const SizedBox(height: 4),
                         Text(
@@ -251,9 +317,7 @@ class _PrayerHeroCard extends StatelessWidget {
                             fontSize: 26,
                             fontWeight: FontWeight.w500,
                             color: _green,
-                            fontFeatures: [
-                              FontFeature.tabularFigures(),
-                            ],
+                            fontFeatures: [FontFeature.tabularFigures()],
                             height: 1,
                           ),
                         ),
@@ -275,8 +339,7 @@ class _PrayerHeroCard extends StatelessWidget {
                 decoration: const BoxDecoration(color: _tint),
                 child: Row(
                   children: [
-                    const Icon(Icons.access_time,
-                        size: 14, color: _grey888),
+                    const Icon(Icons.access_time, size: 14, color: _grey888),
                     const SizedBox(width: 8),
                     Text.rich(
                       TextSpan(
@@ -292,12 +355,13 @@ class _PrayerHeroCard extends StatelessWidget {
                           TextSpan(
                             text: ' kl. ${data.nextPrayerTime}',
                             style: const TextStyle(
-                                fontSize: 13, color: _grey666),
+                              fontSize: 13,
+                              color: _grey666,
+                            ),
                           ),
                           const TextSpan(
-                            text: ' — sedan ',
-                            style: TextStyle(
-                                fontSize: 13, color: _grey666),
+                            text: ', sedan ',
+                            style: TextStyle(fontSize: 13, color: _grey666),
                           ),
                           TextSpan(
                             text: data.nextNextPrayerName,
@@ -310,7 +374,9 @@ class _PrayerHeroCard extends StatelessWidget {
                           TextSpan(
                             text: ' kl. ${data.nextNextPrayerTime}',
                             style: const TextStyle(
-                                fontSize: 13, color: _grey666),
+                              fontSize: 13,
+                              color: _grey666,
+                            ),
                           ),
                         ],
                       ),
@@ -328,10 +394,8 @@ class _PrayerHeroCard extends StatelessWidget {
   static String _formatCountdown(Duration d) {
     final positive = d.isNegative ? Duration.zero : d;
     final h = positive.inHours.toString().padLeft(2, '0');
-    final m =
-        (positive.inMinutes % 60).toString().padLeft(2, '0');
-    final s =
-        (positive.inSeconds % 60).toString().padLeft(2, '0');
+    final m = (positive.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (positive.inSeconds % 60).toString().padLeft(2, '0');
     return '$h:$m:$s';
   }
 }
@@ -347,14 +411,12 @@ class _AyahCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: dailyAyah.when(
-        loading: () =>
-            const SizedBox(height: 60, child: LoadingView()),
+        loading: () => const SizedBox(height: 60, child: LoadingView()),
         error: (_, __) => const SizedBox(height: 60, child: LoadingView()),
         data: (ayah) {
           final theme = Theme.of(context);
           return Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
             child: Directionality(
               textDirection: TextDirection.rtl,
               child: Column(
@@ -388,10 +450,7 @@ class _AyahCard extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: Text(
                         '${ayah.surahEnglishName} ${ayah.surahNumber}:${ayah.numberInSurah}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: _grey888,
-                        ),
+                        style: const TextStyle(fontSize: 11, color: _grey888),
                       ),
                     ),
                   ),
@@ -424,10 +483,8 @@ class _PrayerListCard extends StatelessWidget {
     final gold = isDark ? AppColors.goldLight : AppColors.gold;
 
     return todayTimes.when(
-      loading: () => Card(
-        child:
-            const SizedBox(height: 60, child: LoadingView()),
-      ),
+      loading: () =>
+          Card(child: const SizedBox(height: 60, child: LoadingView())),
       error: (_, __) => Card(
         child: ErrorView(
           message: 'Kunde inte ladda bönetider',
@@ -449,14 +506,12 @@ class _PrayerListCard extends StatelessWidget {
           final name = _prayerOrder[i];
           final time = times[name]!;
           final isCurrent = name == currentPrayerName;
-          final isPassed =
-              _isPassed(time, name, currentPrayerName);
+          final isPassed = _isPassed(time, name, currentPrayerName);
           final isUpcoming = !isPassed && !isCurrent;
 
           rows.add(
             Container(
-              padding: const EdgeInsets.symmetric(
-                  vertical: 9, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 16),
               decoration: isCurrent
                   ? const BoxDecoration(color: _activeBg)
                   : null,
@@ -466,62 +521,53 @@ class _PrayerListCard extends StatelessWidget {
                     name,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: isCurrent
-                          ? FontWeight.w500
-                          : null,
+                      fontWeight: isCurrent ? FontWeight.w500 : null,
                       color: isPassed
                           ? const Color(0xFFBBBBBB)
                           : isCurrent
-                              ? _dark
-                              : _grey333,
+                          ? _dark
+                          : _grey333,
                     ),
                   ),
                   const SizedBox(width: 6),
                   if (isPassed)
-                    const Icon(Icons.check,
-                        size: 14, color: _grey888),
+                    const Icon(Icons.check, size: 14, color: _grey888),
                   if (isCurrent)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: gold,
-                        borderRadius:
-                            BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         'Be nu!',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? Colors.black
-                              : Colors.white,
+                          color: isDark ? Colors.black : Colors.white,
                         ),
                       ),
                     ),
                   if (isUpcoming)
                     Text(
                       _timeRemaining(time),
-                      style: const TextStyle(
-                          fontSize: 11, color: _grey888),
+                      style: const TextStyle(fontSize: 11, color: _grey888),
                     ),
                   const Spacer(),
                   Text(
                     time,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: isCurrent
-                          ? FontWeight.w500
-                          : null,
+                      fontWeight: isCurrent ? FontWeight.w500 : null,
                       color: isPassed
                           ? const Color(0xFFCCCCCC)
                           : isCurrent
-                              ? _dark
-                              : _grey555,
-                      fontFeatures: const [
-                        FontFeature.tabularFigures(),
-                      ],
+                          ? _dark
+                          : _grey555,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ],
@@ -530,10 +576,9 @@ class _PrayerListCard extends StatelessWidget {
           );
 
           if (i < _prayerOrder.length - 1) {
-            rows.add(const Divider(
-                height: 1,
-                thickness: 0.5,
-                color: _dividerMedium));
+            rows.add(
+              const Divider(height: 1, thickness: 0.5, color: _dividerMedium),
+            );
           }
         }
 
