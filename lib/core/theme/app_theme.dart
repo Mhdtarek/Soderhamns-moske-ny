@@ -10,6 +10,14 @@ class AppTheme {
         brightness: Brightness.light,
       ),
       scaffoldBackgroundColor: AppColors.lightBackground,
+      appBarTheme: const AppBarTheme(
+        centerTitle: true,
+        backgroundColor: AppColors.lightBackground,
+        foregroundColor: AppColors.lightText,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+      ),
     );
   }
 
@@ -21,6 +29,14 @@ class AppTheme {
         brightness: Brightness.dark,
       ),
       scaffoldBackgroundColor: AppColors.darkBackground,
+      appBarTheme: const AppBarTheme(
+        centerTitle: true,
+        backgroundColor: AppColors.darkBackground,
+        foregroundColor: AppColors.darkText,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+      ),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:soderhamns_moske_app/shared/widgets/offline_banner.dart';
@@ -15,6 +17,15 @@ import '../../features/qibla/presentation/qibla_screen.dart';
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+bool get _isIOS => defaultTargetPlatform == TargetPlatform.iOS;
+
+Page<void> _iosAwarePage({required Widget child, LocalKey? key}) {
+  if (_isIOS) {
+    return CupertinoPage<void>(key: key, child: child);
+  }
+  return MaterialPage<void>(key: key, child: child);
+}
+
 int _calculateSelectedIndex(BuildContext context) {
   final location = GoRouterState.of(context).uri.path;
   if (location == Routes.home) return 0;
@@ -24,22 +35,39 @@ int _calculateSelectedIndex(BuildContext context) {
   return 0;
 }
 
-final goRouter = GoRouter(
-  navigatorKey: _rootNavigatorKey,
-  initialLocation: Routes.home,
-  routes: [
-    ShellRoute(
-      navigatorKey: _shellNavigatorKey,
-      builder: (context, state, child) {
-        final selectedIndex = _calculateSelectedIndex(context);
-        return Scaffold(
-          body: Column(
-            children: [
-              const OfflineBanner(),
-              Expanded(child: child),
-            ],
-          ),
-          bottomNavigationBar: NavigationBar(
+class AppShell extends StatelessWidget {
+  const AppShell({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedIndex = _calculateSelectedIndex(context);
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+
+    return Scaffold(
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(child: child),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isIOS)
+            Divider(
+              height: 0.5,
+              thickness: 0.5,
+              color: Theme.of(context).brightness == Brightness.light
+                  ? Colors.black.withValues(alpha: 0.12)
+                  : Colors.white.withValues(alpha: 0.12),
+            ),
+          NavigationBar(
             selectedIndex: selectedIndex,
             onDestinationSelected: (index) {
               switch (index) {
@@ -76,8 +104,19 @@ final goRouter = GoRouter(
               ),
             ],
           ),
-        );
-      },
+        ],
+      ),
+    );
+  }
+}
+
+final goRouter = GoRouter(
+  navigatorKey: _rootNavigatorKey,
+  initialLocation: Routes.home,
+  routes: [
+    ShellRoute(
+      navigatorKey: _shellNavigatorKey,
+      builder: (context, state, child) => AppShell(child: child),
       routes: [
         GoRoute(
           path: Routes.home,
@@ -93,9 +132,12 @@ final goRouter = GoRouter(
         ),
         GoRoute(
           path: Routes.newsDetail,
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final slug = state.pathParameters['slug']!;
-            return NewsDetailScreen(slug: slug);
+            return _iosAwarePage(
+              key: state.pageKey,
+              child: NewsDetailScreen(slug: slug),
+            );
           },
         ),
         GoRoute(
@@ -106,19 +148,31 @@ final goRouter = GoRouter(
     ),
     GoRoute(
       path: Routes.donate,
-      builder: (context, state) => const DonateScreen(),
+      pageBuilder: (context, state) => _iosAwarePage(
+        key: state.pageKey,
+        child: const DonateScreen(),
+      ),
     ),
     GoRoute(
       path: Routes.contact,
-      builder: (context, state) => const ContactScreen(),
+      pageBuilder: (context, state) => _iosAwarePage(
+        key: state.pageKey,
+        child: const ContactScreen(),
+      ),
     ),
     GoRoute(
       path: Routes.settings,
-      builder: (context, state) => const SettingsScreen(),
+      pageBuilder: (context, state) => _iosAwarePage(
+        key: state.pageKey,
+        child: const SettingsScreen(),
+      ),
     ),
     GoRoute(
       path: Routes.qibla,
-      builder: (context, state) => const QiblaScreen(),
+      pageBuilder: (context, state) => _iosAwarePage(
+        key: state.pageKey,
+        child: const QiblaScreen(),
+      ),
     ),
   ],
 );
