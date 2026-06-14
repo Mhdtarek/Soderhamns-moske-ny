@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:soderhamns_moske_app/core/theme/app_colors.dart';
@@ -12,7 +10,6 @@ import 'package:soderhamns_moske_app/features/prayer_times/providers/prayer_time
 import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
 import 'package:soderhamns_moske_app/shared/widgets/loading_view.dart';
 
-const _bg = Color(0xFFF0ECE4);
 const _grey888 = Color(0xFF888888);
 const _grey555 = Color(0xFF555555);
 const _grey333 = Color(0xFF333333);
@@ -35,7 +32,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
-  Timer? _timer;
   late AnimationController _entryController;
   late Animation<double> _heroFade, _heroSlide;
   late Animation<double> _ayahFade, _ayahSlide;
@@ -44,12 +40,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        ref.invalidate(nextPrayerCountdownProvider);
-        setState(() {});
-      }
-    });
     _entryController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -83,7 +73,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void dispose() {
-    _timer?.cancel();
     _entryController.dispose();
     super.dispose();
   }
@@ -110,9 +99,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final todayTimes = ref.watch(todayPrayerTimesProvider);
 
     return Scaffold(
-      backgroundColor: _bg,
       appBar: AppBar(
-        backgroundColor: _bg,
         title: const Text('Söderhamns Moské'),
       ),
       body: ListView(

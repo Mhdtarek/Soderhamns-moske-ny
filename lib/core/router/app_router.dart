@@ -46,11 +46,15 @@ class AppShell extends StatelessWidget {
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     return Scaffold(
-      body: Column(
-        children: [
-          const OfflineBanner(),
-          Expanded(child: child),
-        ],
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
+          children: [
+            const OfflineBanner(),
+            Expanded(child: child),
+          ],
+        ),
       ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,

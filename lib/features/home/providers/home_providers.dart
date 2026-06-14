@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:hijri/hijri_calendar.dart';
@@ -23,8 +25,21 @@ final gregorianDateProvider = Provider<String>((ref) {
   }
 });
 
+final clockTickProvider = StreamProvider.autoDispose<int>((ref) {
+  final controller = StreamController<int>();
+  final timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    controller.add(0);
+  });
+  ref.onDispose(() {
+    timer.cancel();
+    controller.close();
+  });
+  return controller.stream;
+});
+
 final nextPrayerCountdownProvider =
     Provider<AsyncValue<NextPrayerCountdown>>((ref) {
+  ref.watch(clockTickProvider);
   final today = ref.watch(todayPrayerTimesProvider).valueOrNull;
   final tomorrow = ref.watch(tomorrowPrayerTimesProvider).valueOrNull;
   if (today == null || tomorrow == null) return const AsyncValue.loading();

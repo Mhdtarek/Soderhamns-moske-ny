@@ -171,63 +171,38 @@ class _WeekData extends ConsumerWidget {
             child: Text('Inga bönetider tillgängliga'),
           );
         }
-        
+
         final now = DateTime.now();
         final weekYear = getIsoWeekYear(now);
         final monday = getMondayOfWeek(weekYear, week);
         const dayNames = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'];
-        
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            columnSpacing: 12,
-            columns: [
-              const DataColumn(label: Text('Dag')),
-              const DataColumn(label: Text('Fajr')),
-              const DataColumn(label: Text('Shuruk')),
-              const DataColumn(label: Text('Dhohr')),
-              const DataColumn(label: Text('Asr')),
-              const DataColumn(label: Text('Maghrib')),
-              const DataColumn(label: Text('Isha')),
-            ],
-            rows: days.asMap().entries.map((entry) {
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 600;
+            final headers = const ['Dag', 'Fajr', 'Shuruk', 'Dhohr', 'Asr', 'Maghrib', 'Isha'];
+
+            final rows = days.asMap().entries.map((entry) {
               final i = entry.key;
               final d = entry.value;
               final dayDate = monday.add(Duration(days: i));
               final isToday = now.year == dayDate.year &&
                   now.month == dayDate.month &&
                   now.day == dayDate.day;
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              final highlightColor = isDark ? AppColors.goldLight : AppColors.gold;
-              
-              return DataRow(
-                color: isToday
-                    ? WidgetStatePropertyAll(
-                        highlightColor.withValues(alpha: 0.15))
-                    : null,
+              return _RowData(
                 cells: [
-                  DataCell(Text(
-                    '${dayNames[i]} ${d.date}/${dayDate.month}',
-                    style: isToday
-                        ? TextStyle(fontWeight: FontWeight.bold, color: highlightColor)
-                        : null,
-                  )),
-                  DataCell(Text(d.fajr,
-                      style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
-                  DataCell(Text(d.shuruk,
-                      style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
-                  DataCell(Text(d.dhohr,
-                      style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
-                  DataCell(Text(d.asr,
-                      style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
-                  DataCell(Text(d.maghrib,
-                      style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
-                  DataCell(Text(d.isha,
-                      style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
+                  '${dayNames[i]} ${d.date}/${dayDate.month}',
+                  d.fajr, d.shuruk, d.dhohr, d.asr, d.maghrib, d.isha,
                 ],
+                isHighlighted: isToday,
               );
-            }).toList(),
-          ),
+            }).toList();
+
+            if (isWide) {
+              return _WideTable(headers: headers, rows: rows);
+            }
+            return _NarrowTable(headers: headers, rows: rows);
+          },
         );
       },
       loading: () => const Padding(
@@ -342,48 +317,27 @@ class _MonthData extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncDays = ref.watch(monthPrayerTimesProvider(month));
     return asyncDays.when(
-      data: (days) => SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columnSpacing: 16,
-          columns: const [
-            DataColumn(label: Text('Dag')),
-            DataColumn(label: Text('Fajr')),
-            DataColumn(label: Text('Shuruk')),
-            DataColumn(label: Text('Dhohr')),
-            DataColumn(label: Text('Asr')),
-            DataColumn(label: Text('Maghrib')),
-            DataColumn(label: Text('Isha')),
-          ],
-          rows: days.map((d) {
+      data: (days) => LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 600;
+          const headers = ['Dag', 'Fajr', 'Shuruk', 'Dhohr', 'Asr', 'Maghrib', 'Isha'];
+
+          final rows = days.map((d) {
             final isToday = DateTime.now().month == month &&
                 DateTime.now().day == d.date;
-            final isDark = Theme.of(context).brightness == Brightness.dark;
-            final highlightColor = isDark ? AppColors.goldLight : AppColors.gold;
-            return DataRow(
-              color: isToday
-                  ? WidgetStatePropertyAll(
-                      highlightColor.withValues(alpha: 0.15))
-                  : null,
+            return _RowData(
               cells: [
-                DataCell(Text('${d.date}',
-                    style: isToday ? TextStyle(fontWeight: FontWeight.bold, color: highlightColor) : null)),
-                DataCell(Text(d.fajr,
-                    style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
-                DataCell(Text(d.shuruk,
-                    style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
-                DataCell(Text(d.dhohr,
-                    style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
-                DataCell(Text(d.asr,
-                    style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
-                DataCell(Text(d.maghrib,
-                    style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
-                DataCell(Text(d.isha,
-                    style: isToday ? const TextStyle(fontWeight: FontWeight.bold) : null)),
+                '${d.date}', d.fajr, d.shuruk, d.dhohr, d.asr, d.maghrib, d.isha,
               ],
+              isHighlighted: isToday,
             );
-          }).toList(),
-        ),
+          }).toList();
+
+          if (isWide) {
+            return _WideTable(headers: headers, rows: rows);
+          }
+          return _NarrowTable(headers: headers, rows: rows);
+        },
       ),
       loading: () => const Padding(
         padding: EdgeInsets.all(16),
@@ -395,6 +349,100 @@ class _MonthData extends ConsumerWidget {
           message: 'Kunde inte ladda bönetider',
           onRetry: () => ref.invalidate(monthPrayerTimesProvider(month)),
         ),
+      ),
+    );
+  }
+}
+
+class _RowData {
+  final List<String> cells;
+  final bool isHighlighted;
+  const _RowData({required this.cells, required this.isHighlighted});
+}
+
+class _WideTable extends StatelessWidget {
+  final List<String> headers;
+  final List<_RowData> rows;
+  const _WideTable({required this.headers, required this.rows});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final highlightColor = isDark ? AppColors.goldLight : AppColors.gold;
+    final dividerColor = isDark ? Colors.white12 : Colors.black12;
+
+    return Table(
+      defaultColumnWidth: const FlexColumnWidth(),
+      children: [
+        TableRow(
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: dividerColor, width: 1.5)),
+          ),
+          children: headers.map((h) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            child: Text(h, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          )).toList(),
+        ),
+        for (final row in rows)
+          TableRow(
+            decoration: BoxDecoration(
+              color: row.isHighlighted ? highlightColor.withValues(alpha: 0.1) : null,
+              border: Border(bottom: BorderSide(color: dividerColor, width: 0.5)),
+            ),
+            children: row.cells.asMap().entries.map((e) {
+              final isLabel = e.key == 0;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                child: Text(
+                  e.value,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: row.isHighlighted ? FontWeight.w600 : null,
+                    color: row.isHighlighted && isLabel ? highlightColor : null,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+      ],
+    );
+  }
+}
+
+class _NarrowTable extends StatelessWidget {
+  final List<String> headers;
+  final List<_RowData> rows;
+  const _NarrowTable({required this.headers, required this.rows});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final highlightColor = isDark ? AppColors.goldLight : AppColors.gold;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columnSpacing: 12,
+        columns: headers.map((h) => DataColumn(label: Text(h))).toList(),
+        rows: rows.map((row) {
+          return DataRow(
+            color: row.isHighlighted
+                ? WidgetStatePropertyAll(highlightColor.withValues(alpha: 0.15))
+                : null,
+            cells: row.cells.asMap().entries.map((e) {
+              final isLabel = e.key == 0;
+              return DataCell(Text(
+                e.value,
+                style: row.isHighlighted
+                    ? TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isLabel ? highlightColor : null,
+                      )
+                    : null,
+              ));
+            }).toList(),
+          );
+        }).toList(),
       ),
     );
   }
