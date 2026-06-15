@@ -44,6 +44,50 @@ void main() {
   });
 
   group('News flow', () {
+    testWidgets('list shows loading state then cards', (tester) async {
+      when(() => remote.getNewsPosts()).thenAnswer((_) async => [
+        NewsPost(
+          slug: 'post-1',
+          title: 'Första nyheten',
+          date: DateTime(2026, 6, 10),
+        ),
+      ]);
+      when(() => local.cacheNews(any())).thenAnswer((_) async {});
+
+      await tester.pumpWidget(createApp(local: local, remote: remote));
+      // Loading state appears immediately
+      expect(find.byType(CircularProgressIndicator), findsWidgets);
+      // Then resolves to data
+      await tester.pumpAndSettle();
+      expect(find.text('Första nyheten'), findsOneWidget);
+    });
+
+    testWidgets('detail shows not found when fetch fails', (tester) async {
+      when(() => local.getCachedArticle('err-post')).thenReturn(null);
+      when(() => remote.getNewsPost('err-post')).thenThrow(Exception('fail'));
+      when(() => local.getCachedNews()).thenReturn(null);
+
+      await tester.pumpWidget(createApp(
+        local: local,
+        remote: remote,
+        child: const NewsDetailScreen(slug: 'err-post'),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Artikeln kunde inte hittas'), findsOneWidget);
+    });
+
+    testWidgets('list shows error state with retry when no cache', (tester) async {
+      when(() => remote.getNewsPosts()).thenThrow(Exception('fail'));
+      when(() => local.getCachedNews()).thenReturn(null);
+
+      await tester.pumpWidget(createApp(local: local, remote: remote));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.text('Försök igen'), findsOneWidget);
+    });
+
     testWidgets('list loads and shows menu cards', (tester) async {
       when(() => remote.getNewsPosts()).thenAnswer((_) async => [
         NewsPost(
@@ -144,6 +188,22 @@ Detta är **fet text** och *kursiv text*.
 
       expect(find.text('Visar sparad version'), findsOneWidget);
       expect(find.textContaining('Senast uppdaterad'), findsOneWidget);
+    });
+
+    testWidgets('pull-to-refresh is available on list', (tester) async {
+      when(() => remote.getNewsPosts()).thenAnswer((_) async => [
+        NewsPost(
+          slug: 'refresh-post',
+          title: 'Nyhet',
+          date: DateTime(2026, 6, 10),
+        ),
+      ]);
+      when(() => local.cacheNews(any())).thenAnswer((_) async {});
+
+      await tester.pumpWidget(createApp(local: local, remote: remote));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RefreshIndicator), findsOneWidget);
     });
   });
 }
