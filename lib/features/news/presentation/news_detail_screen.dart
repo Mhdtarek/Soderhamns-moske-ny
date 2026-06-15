@@ -4,6 +4,8 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:soderhamns_moske_app/core/config/env.dart';
 import 'package:soderhamns_moske_app/core/router/routes.dart';
 import 'package:soderhamns_moske_app/features/news/providers/news_providers.dart';
 import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
@@ -25,6 +27,17 @@ class NewsDetailScreen extends ConsumerWidget {
           onPressed: () => context.go(Routes.news),
         ),
         title: Text(detailAsync.valueOrNull?.title ?? 'Nyhet'),
+        actions: [
+          if (detailAsync.valueOrNull != null)
+            IconButton(
+              icon: const Icon(Icons.share),
+              tooltip: 'Dela',
+              onPressed: () => Share.share(
+                '${detailAsync.valueOrNull!.title}\n${Env.prayerApiBase}/nyheter/$slug',
+                subject: detailAsync.valueOrNull!.title,
+              ),
+            ),
+        ],
       ),
       body: detailAsync.when(
         loading: () => const LoadingView(),
