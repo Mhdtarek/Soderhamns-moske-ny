@@ -68,14 +68,32 @@ void main() {
       expect(find.text('Andra nyheten'), findsOneWidget);
     });
 
-    testWidgets('detail renders title and body', (tester) async {
+    testWidgets('detail renders Markdown content (headings, bold, italic, lists, code, links, images)',
+        (tester) async {
+      final markdownBody = '''
+# Rubrik 1
+
+## Rubrik 2
+
+Detta är **fet text** och *kursiv text*.
+
+- Punkt 1
+- Punkt 2
+- Punkt 3
+
+`kod` i texten.
+
+> Blockcitat
+
+![alt](https://example.com/bild.jpg)
+''';
       when(() => local.getCachedArticle('test-article')).thenReturn(null);
       when(() => remote.getNewsPost('test-article')).thenAnswer((_) async =>
           NewsPost(
             slug: 'test-article',
             title: 'Test Artikel',
             date: DateTime(2026, 6, 15),
-            body: 'Innehållet i artikeln.',
+            body: markdownBody,
           ));
       when(() => local.getCachedNews()).thenReturn([
         NewsPost(
@@ -93,7 +111,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Test Artikel'), findsAtLeast(1));
-      expect(find.textContaining('Innehållet i artikeln.'), findsOneWidget);
+      expect(find.text('Rubrik 1'), findsOneWidget);
+      expect(find.text('Rubrik 2'), findsOneWidget);
+      expect(find.text('Punkt 1'), findsOneWidget);
+      expect(find.text('Punkt 2'), findsOneWidget);
+      expect(find.text('Punkt 3'), findsOneWidget);
+      // Bold text is rendered as regular text by flutter_markdown via TextSpan
+      expect(find.textContaining('fet text'), findsOneWidget);
+      expect(find.textContaining('kursiv text'), findsOneWidget);
+      expect(find.textContaining('kod'), findsOneWidget);
+      expect(find.textContaining('Blockcitat'), findsOneWidget);
     });
 
     testWidgets('shows offline banner when offline with cached data',

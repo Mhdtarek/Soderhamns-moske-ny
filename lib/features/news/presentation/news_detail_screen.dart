@@ -118,6 +118,12 @@ class NewsDetailScreen extends ConsumerWidget {
         height: 1.6,
       ),
       listBullet: theme.textTheme.bodyLarge,
+      strong: theme.textTheme.bodyLarge?.copyWith(
+        fontWeight: FontWeight.bold,
+      ),
+      em: theme.textTheme.bodyLarge?.copyWith(
+        fontStyle: FontStyle.italic,
+      ),
       code: theme.textTheme.bodySmall?.copyWith(
         fontFamily: 'monospace',
         backgroundColor: theme.colorScheme.surfaceContainerHighest,
@@ -135,6 +141,10 @@ class NewsDetailScreen extends ConsumerWidget {
         ),
         color: theme.colorScheme.surfaceContainerLow,
       ),
+      blockquote: theme.textTheme.bodyMedium?.copyWith(
+        fontStyle: FontStyle.italic,
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
       horizontalRuleDecoration: BoxDecoration(
         border: Border(
           top: BorderSide(
@@ -150,6 +160,35 @@ class NewsDetailScreen extends ConsumerWidget {
       data: body,
       styleSheet: styleSheet,
       selectable: true,
+      imageBuilder: (uri, title, alt) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              uri.toString(),
+              width: double.infinity,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                final total = loadingProgress.expectedTotalBytes;
+                return Container(
+                  height: 200,
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 150,
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: const Center(child: Icon(Icons.broken_image, size: 48)),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
