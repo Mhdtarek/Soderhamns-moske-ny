@@ -31,7 +31,11 @@ class NewsRepository {
     try {
       final post = await remote.getNewsPost(slug);
       if (post.body != null) {
-        await local.cacheArticle(slug, post.body!);
+        try {
+          await local.cacheArticle(slug, post.body!);
+        } catch (_) {
+          // Cache write failure is non-fatal
+        }
       }
       return post.body;
     } catch (_) {
