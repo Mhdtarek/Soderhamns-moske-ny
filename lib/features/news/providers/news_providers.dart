@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:soderhamns_moske_app/core/error/app_exception.dart';
 import 'package:soderhamns_moske_app/data/datasources/local/news_local_ds.dart';
 import 'package:soderhamns_moske_app/data/datasources/remote/news_remote_ds.dart';
 import 'package:soderhamns_moske_app/data/models/news_post.dart';
@@ -33,17 +34,18 @@ final newsListProvider = FutureProvider<List<NewsPost>>((ref) async {
 final newsDetailProvider =
     FutureProvider.family<NewsPost?, String>((ref, slug) async {
   final repo = ref.watch(newsRepositoryProvider);
-  final body = await repo.getNewsBody(slug);
-  final cached = repo.getCachedNews();
-  final match = cached?.where((p) => p.slug == slug).firstOrNull;
 
-  if (match != null) {
-    return match.copyWith(body: body);
+  try {
+    return await repo.getNewsBody(slug);
+  } on NetworkException {
+    throw const NetworkException();
+  } on ParseException {
+    throw const ParseException();
+  } catch (_) {
+    final cached = repo.getCachedNews()
+        ?.where((p) => p.slug == slug)
+        .firstOrNull;
+    if (cached != null) return cached;
+    rethrow;
   }
-
-  if (body != null) {
-    return NewsPost(slug: slug, title: '', date: DateTime.now(), body: body);
-  }
-
-  return null;
 });

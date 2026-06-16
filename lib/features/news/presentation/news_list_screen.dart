@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:soderhamns_moske_app/data/models/news_post.dart';
 import 'package:soderhamns_moske_app/features/news/providers/news_providers.dart';
 import 'package:soderhamns_moske_app/features/news/presentation/widgets/news_card.dart';
+import 'package:soderhamns_moske_app/features/news/presentation/widgets/news_offline_banner.dart';
 import 'package:soderhamns_moske_app/shared/providers/connectivity_provider.dart';
 import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
 import 'package:soderhamns_moske_app/shared/widgets/loading_view.dart';
@@ -43,7 +43,7 @@ class _NewsListScreenState extends ConsumerState<NewsListScreen> {
           return Column(
             children: [
               if (!isOnline && lastUpdated != null)
-                _buildOfflineBanner(lastUpdated),
+                NewsOfflineBanner(lastUpdated: lastUpdated),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: _refresh,
@@ -102,63 +102,6 @@ class _NewsListScreenState extends ConsumerState<NewsListScreen> {
         );
       },
     );
-  }
-
-  Widget _buildOfflineBanner(String lastUpdated) {
-    final formatted = _formatLastUpdated(lastUpdated);
-    final colors = Theme.of(context).colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: colors.errorContainer,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: Icon(
-              Icons.cloud_off,
-              size: 16,
-              color: colors.onErrorContainer,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Visar sparad version',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: colors.onErrorContainer,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Senast uppdaterad: $formatted',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.onErrorContainer.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatLastUpdated(String iso) {
-    try {
-      final date = DateTime.parse(iso);
-      return DateFormat('d MMMM y', 'sv').format(date);
-    } catch (_) {
-      return iso;
-    }
   }
 
   bool _isRecent(DateTime date) {

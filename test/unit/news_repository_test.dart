@@ -65,35 +65,53 @@ void main() {
     });
   });
 
-  group('getNewsBody — cache fallback', () {
-    test('returns cached body when available', () async {
+  group('getNewsBody', () {
+    final postWithBody = post.copyWith(body: 'the body');
+
+    test('returns cached article with metadata when available', () async {
       when(() => local.getCachedArticle('test')).thenReturn('cached body');
+      when(() => local.getCachedNews()).thenReturn([post]);
 
       final result = await repo.getNewsBody('test');
 
-      expect(result, 'cached body');
+      expect(result.slug, 'test');
+      expect(result.title, 'Test');
+      expect(result.body, 'cached body');
       verifyNever(() => remote.getNewsPost(any()));
     });
 
     test('fetches from remote when no cached body', () async {
       when(() => local.getCachedArticle('test')).thenReturn(null);
-      when(() => remote.getNewsPost('test')).thenAnswer(
-        (_) async => post.copyWith(body: 'remote body'),
-      );
+      when(() => remote.getNewsPost('test'))
+          .thenAnswer((_) async => postWithBody);
 
       final result = await repo.getNewsBody('test');
 
-      expect(result, 'remote body');
+      expect(result.slug, 'test');
+      expect(result.title, 'Test');
+      expect(result.body, 'the body');
     });
 
-    test('returns null when remote fails and no cached body', () async {
+    test('throws when remote fails and no cached body', () async {
       when(() => local.getCachedArticle('test')).thenReturn(null);
       when(() => remote.getNewsPost('test'))
           .thenAnswer((_) async => throw const NetworkException());
 
+      expect(
+        () => repo.getNewsBody('test'),
+        throwsA(isA<NetworkException>()),
+      );
+    });
+
+    test('returns post with null body when article has no content', () async {
+      when(() => local.getCachedArticle('test')).thenReturn(null);
+      when(() => remote.getNewsPost('test'))
+          .thenAnswer((_) async => post.copyWith(body: null));
+
       final result = await repo.getNewsBody('test');
 
-      expect(result, isNull);
+      expect(result.body, isNull);
+      expect(result.title, 'Test');
     });
   });
 }

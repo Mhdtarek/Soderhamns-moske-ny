@@ -62,7 +62,7 @@ void main() {
       expect(find.text('Första nyheten'), findsOneWidget);
     });
 
-    testWidgets('detail shows not found when fetch fails', (tester) async {
+    testWidgets('detail shows error when fetch fails', (tester) async {
       when(() => local.getCachedArticle('err-post')).thenReturn(null);
       when(() => remote.getNewsPost('err-post')).thenThrow(Exception('fail'));
       when(() => local.getCachedNews()).thenReturn(null);
@@ -74,7 +74,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      expect(find.text('Artikeln kunde inte hittas'), findsOneWidget);
+      expect(find.text('Kunde inte ladda artikeln'), findsOneWidget);
     });
 
     testWidgets('list shows error state with retry when no cache', (tester) async {

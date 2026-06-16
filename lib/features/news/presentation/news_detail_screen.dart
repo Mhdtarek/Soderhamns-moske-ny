@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:soderhamns_moske_app/core/config/env.dart';
+import 'package:soderhamns_moske_app/core/error/app_exception.dart';
 import 'package:soderhamns_moske_app/core/router/routes.dart';
 import 'package:soderhamns_moske_app/features/news/providers/news_providers.dart';
 import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
@@ -41,10 +42,15 @@ class NewsDetailScreen extends ConsumerWidget {
       ),
       body: detailAsync.when(
         loading: () => const LoadingView(),
-        error: (_, __) => ErrorView(
-          message: 'Kunde inte ladda artikeln',
-          onRetry: () => ref.invalidate(newsDetailProvider(slug)),
-        ),
+        error: (error, _) {
+          final message = error is NetworkException
+              ? 'Ingen internetanslutning'
+              : 'Kunde inte ladda artikeln';
+          return ErrorView(
+            message: message,
+            onRetry: () => ref.invalidate(newsDetailProvider(slug)),
+          );
+        },
         data: (post) {
           if (post == null) {
             return const Center(child: Text('Artikeln kunde inte hittas'));
