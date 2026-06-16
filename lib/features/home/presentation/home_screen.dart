@@ -6,6 +6,8 @@ import 'package:soderhamns_moske_app/data/models/next_prayer_countdown.dart';
 import 'package:soderhamns_moske_app/data/models/prayer_day.dart';
 import 'package:soderhamns_moske_app/features/ayah/providers/ayah_providers.dart';
 import 'package:soderhamns_moske_app/features/home/providers/home_providers.dart';
+import 'package:soderhamns_moske_app/features/home/presentation/widgets/latest_news_card.dart';
+import 'package:soderhamns_moske_app/features/news/providers/news_providers.dart';
 import 'package:soderhamns_moske_app/features/prayer_times/providers/prayer_times_providers.dart';
 import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
 import 'package:soderhamns_moske_app/shared/widgets/loading_view.dart';
@@ -36,6 +38,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late Animation<double> _heroFade, _heroSlide;
   late Animation<double> _ayahFade, _ayahSlide;
   late Animation<double> _listFade, _listSlide;
+  late Animation<double> _newsFade, _newsSlide;
 
   @override
   void initState() {
@@ -68,6 +71,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       parent: _entryController,
       curve: const Interval(0.4, 0.8, curve: Curves.easeOut),
     );
+    _newsFade = CurvedAnimation(
+      parent: _entryController,
+      curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
+    );
+    _newsSlide = CurvedAnimation(
+      parent: _entryController,
+      curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
+    );
     _entryController.forward();
   }
 
@@ -97,11 +108,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final countdown = ref.watch(nextPrayerCountdownProvider);
     final dailyAyah = ref.watch(dailyAyahProvider);
     final todayTimes = ref.watch(todayPrayerTimesProvider);
+    final newsAsync = ref.watch(newsListProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Söderhamns Moské'),
-      ),
+      appBar: AppBar(title: const Text('Söderhamns Moské')),
       body: ListView(
         physics: Theme.of(context).platform == TargetPlatform.iOS
             ? const BouncingScrollPhysics()
@@ -122,8 +132,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   gregorianDate: gregorianDate,
                   hijriDate: hijriDate,
                   countdown: countdown,
-                  onRetry: () =>
-                      ref.invalidate(nextPrayerCountdownProvider),
+                  onRetry: () => ref.invalidate(nextPrayerCountdownProvider),
                 ),
               ),
             ),
@@ -155,9 +164,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: _PrayerListCard(
                   todayTimes: todayTimes,
                   currentPrayerName: countdown.valueOrNull?.currentPrayerName,
-                  onRetry: () =>
-                      ref.invalidate(todayPrayerTimesProvider),
+                  onRetry: () => ref.invalidate(todayPrayerTimesProvider),
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FadeTransition(
+            opacity: _newsFade,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.06),
+                end: Offset.zero,
+              ).animate(_newsSlide),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: LatestNewsCard(newsAsync: newsAsync),
               ),
             ),
           ),
