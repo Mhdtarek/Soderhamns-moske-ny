@@ -37,6 +37,9 @@ class _NewsListScreenState extends ConsumerState<NewsListScreen> {
           final sorted = List<NewsPost>.from(posts)
             ..sort((a, b) => b.date.compareTo(a.date));
 
+          final recent = sorted.where((p) => _isRecent(p.date)).toList();
+          final older = sorted.where((p) => !_isRecent(p.date)).toList();
+
           return Column(
             children: [
               if (!isOnline && lastUpdated != null)
@@ -55,19 +58,12 @@ class _NewsListScreenState extends ConsumerState<NewsListScreen> {
                             ),
                           ],
                         )
-                      : ListView.separated(
+                      : ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-                          itemCount: sorted.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 8),
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                          itemCount: _itemCount(recent.length, older.length),
                           itemBuilder: (context, index) {
-                            final post = sorted[index];
-                            return NewsCard(
-                              post: post,
-                              onTap: () =>
-                                  context.go('/nyheter/${post.slug}'),
-                            );
+                            return _buildItem(index, recent, older);
                           },
                         ),
                 ),
@@ -81,14 +77,23 @@ class _NewsListScreenState extends ConsumerState<NewsListScreen> {
 
   Widget _buildLoading() {
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       itemCount: 5,
       itemBuilder: (context, index) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 12),
           child: Card(
+            clipBehavior: Clip.antiAlias,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: Colors.black.withValues(alpha: 0.06),
+                width: 1,
+              ),
+            ),
             child: SizedBox(
-              height: 100,
+              height: 140,
               child: Center(
                 child: LoadingView(),
               ),
@@ -154,6 +159,52 @@ class _NewsListScreenState extends ConsumerState<NewsListScreen> {
     } catch (_) {
       return iso;
     }
+  }
+
+  bool _isRecent(DateTime date) {
+    return DateTime.now().difference(date).inDays < 7;
+  }
+
+  int _itemCount(int recentCount, int olderCount) {
+    var count = recentCount + olderCount;
+    if (olderCount > 0) count += 1; // section header
+    return count;
+  }
+
+  Widget _buildItem(int index, List<NewsPost> recent, List<NewsPost> older) {
+    if (index < recent.length) {
+      return NewsCard(
+        post: recent[index],
+        isNew: true,
+        onTap: () => context.go('/nyheter/${recent[index].slug}'),
+      );
+    }
+
+    final headerIndex = recent.length;
+    if (older.isNotEmpty && index == headerIndex) {
+      return _sectionHeader('Tidigare');
+    }
+
+    final olderIndex = index - headerIndex - 1;
+    final post = older[olderIndex];
+    return NewsCard(
+      post: post,
+      onTap: () => context.go('/nyheter/${post.slug}'),
+    );
+  }
+
+  Widget _sectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 20, 4, 10),
+      child: Text(
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
   }
 
   Widget _buildError() {
