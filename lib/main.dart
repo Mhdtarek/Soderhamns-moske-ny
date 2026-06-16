@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'app.dart';
 import 'data/datasources/local/ayah_local_ds.dart';
 import 'data/datasources/local/news_local_ds.dart';
@@ -12,6 +13,7 @@ import 'features/prayer_times/providers/prayer_times_providers.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+  await initializeDateFormatting('sv');
 
   final prayerLocalDs = PrayerTimesLocalDs();
   await prayerLocalDs.init();

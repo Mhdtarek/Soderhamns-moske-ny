@@ -114,9 +114,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final newsAsync = ref.watch(newsListProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Söderhamns Moské'),
-      ),
+      appBar: AppBar(title: const Text('Söderhamns Moské')),
       body: ListView(
         physics: Theme.of(context).platform == TargetPlatform.iOS
             ? const BouncingScrollPhysics()
@@ -137,8 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   gregorianDate: gregorianDate,
                   hijriDate: hijriDate,
                   countdown: countdown,
-                  onRetry: () =>
-                      ref.invalidate(nextPrayerCountdownProvider),
+                  onRetry: () => ref.invalidate(nextPrayerCountdownProvider),
                 ),
               ),
             ),
@@ -170,8 +167,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: _PrayerListCard(
                   todayTimes: todayTimes,
                   currentPrayerName: countdown.valueOrNull?.currentPrayerName,
-                  onRetry: () =>
-                      ref.invalidate(todayPrayerTimesProvider),
+                  onRetry: () => ref.invalidate(todayPrayerTimesProvider),
                 ),
               ),
             ),
@@ -264,12 +260,12 @@ class _PrayerHeroCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.black : Colors.white,
                       ),
-                              ),
+                    ),
                   ),
-                ],
-              ),
+              ],
             ),
-            const Divider(height: 1, thickness: 0.5, color: _dividerLight),
+          ),
+          const Divider(height: 1, thickness: 0.5, color: _dividerLight),
           // Zone 2 — Current prayer + countdown
           Padding(
             padding: const EdgeInsets.all(12),
@@ -641,10 +637,7 @@ class _LatestNewsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return newsAsync.when(
       loading: () => Card(
-        child: SizedBox(
-          height: 100,
-          child: Center(child: LoadingView()),
-        ),
+        child: SizedBox(height: 100, child: Center(child: LoadingView())),
       ),
       error: (_, __) => Card(
         child: ErrorView(
@@ -684,11 +677,14 @@ class _LatestNewsCard extends ConsumerWidget {
               ),
               for (var i = 0; i < latest.length; i++) ...[
                 if (i > 0)
-                  const Divider(height: 1, thickness: 0.5, color: _dividerLight),
+                  const Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: _dividerLight,
+                  ),
                 _NewsRow(
                   post: latest[i],
-                  onTap: () =>
-                      context.go('/nyheter/${latest[i].slug}'),
+                  onTap: () => context.go('/nyheter/${latest[i].slug}'),
                 ),
               ],
               Padding(
@@ -763,8 +759,11 @@ class _NewsRow extends StatelessWidget {
                       width: 44,
                       height: 44,
                       color: const Color(0xFFE8E4D8),
-                      child: const Icon(Icons.article_outlined,
-                          size: 20, color: _grey888),
+                      child: const Icon(
+                        Icons.article_outlined,
+                        size: 20,
+                        color: _grey888,
+                      ),
                     ),
                   ),
                 ),
@@ -804,7 +803,7 @@ class _NewsRow extends StatelessWidget {
     try {
       return intl.DateFormat('d MMM y', 'sv').format(date);
     } catch (_) {
-      return date.toString();
+      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     }
   }
 }
