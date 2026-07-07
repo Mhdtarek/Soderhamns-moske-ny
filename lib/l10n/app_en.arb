@@ -20,5 +20,19 @@
   "dhohr": "Dhohr",
   "asr": "Asr",
   "maghrib": "Maghrib",
-  "isha": "Isha"
+  "isha": "Isha",
+  "qiblaLocating": "Getting location...",
+  "qiblaLocationDisabled": "Location services disabled",
+  "qiblaLocationDisabledMessage": "Enable location services to show the Qibla direction",
+  "qiblaPermissionDenied": "Location permission denied",
+  "qiblaPermissionMessage": "We need your location to calculate the direction to the Kaaba",
+  "qiblaOpenSettings": "Open settings",
+  "qiblaUnavailable": "Compass unavailable",
+  "qiblaUnavailableMessage": "This device does not support compass functionality",
+  "qiblaBearing": "Qibla direction",
+  "qiblaDistance": "to Kaaba",
+  "qiblaAccuracy": "GPS accuracy",
+  "qiblaLowAccuracy": "Low accuracy",
+  "qiblaCalibrate": "Move your phone in a figure 8 to calibrate the compass",
+  "qiblaRefresh": "Refresh"
 }

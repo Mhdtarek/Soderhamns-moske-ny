@@ -223,6 +223,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Isha'**
   String get isha;
+
+  /// No description provided for @qiblaLocating.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting location...'**
+  String get qiblaLocating;
+
+  /// No description provided for @qiblaLocationDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Location services disabled'**
+  String get qiblaLocationDisabled;
+
+  /// No description provided for @qiblaLocationDisabledMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable location services to show the Qibla direction'**
+  String get qiblaLocationDisabledMessage;
+
+  /// No description provided for @qiblaPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission denied'**
+  String get qiblaPermissionDenied;
+
+  /// No description provided for @qiblaPermissionMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We need your location to calculate the direction to the Kaaba'**
+  String get qiblaPermissionMessage;
+
+  /// No description provided for @qiblaOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get qiblaOpenSettings;
+
+  /// No description provided for @qiblaUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Compass unavailable'**
+  String get qiblaUnavailable;
+
+  /// No description provided for @qiblaUnavailableMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This device does not support compass functionality'**
+  String get qiblaUnavailableMessage;
+
+  /// No description provided for @qiblaBearing.
+  ///
+  /// In en, this message translates to:
+  /// **'Qibla direction'**
+  String get qiblaBearing;
+
+  /// No description provided for @qiblaDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'to Kaaba'**
+  String get qiblaDistance;
+
+  /// No description provided for @qiblaAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS accuracy'**
+  String get qiblaAccuracy;
+
+  /// No description provided for @qiblaLowAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Low accuracy'**
+  String get qiblaLowAccuracy;
+
+  /// No description provided for @qiblaCalibrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Move your phone in a figure 8 to calibrate the compass'**
+  String get qiblaCalibrate;
+
+  /// No description provided for @qiblaRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get qiblaRefresh;
 }
 
 class _AppLocalizationsDelegate

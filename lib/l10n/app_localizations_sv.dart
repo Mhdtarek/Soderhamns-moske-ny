@@ -70,4 +70,49 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get isha => 'Isha';
+
+  @override
+  String get qiblaLocating => 'Hämtar position...';
+
+  @override
+  String get qiblaLocationDisabled => 'Platstjänster avstängda';
+
+  @override
+  String get qiblaLocationDisabledMessage =>
+      'Aktivera platstjänster för att visa Qibla-riktningen';
+
+  @override
+  String get qiblaPermissionDenied => 'Platstjänst nekad';
+
+  @override
+  String get qiblaPermissionMessage =>
+      'Vi behöver din position för att beräkna riktningen till Kaba';
+
+  @override
+  String get qiblaOpenSettings => 'Öppna inställningar';
+
+  @override
+  String get qiblaUnavailable => 'Kompass ej tillgänglig';
+
+  @override
+  String get qiblaUnavailableMessage => 'Denna enhet saknar kompassfunktion';
+
+  @override
+  String get qiblaBearing => 'Qibla-riktning';
+
+  @override
+  String get qiblaDistance => 'till Kaba';
+
+  @override
+  String get qiblaAccuracy => 'GPS-noggrannhet';
+
+  @override
+  String get qiblaLowAccuracy => 'Låg noggrannhet';
+
+  @override
+  String get qiblaCalibrate =>
+      'Rotera telefonen i en åtta för att kalibrera kompassen';
+
+  @override
+  String get qiblaRefresh => 'Uppdatera';
 }

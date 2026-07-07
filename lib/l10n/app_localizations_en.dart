@@ -70,4 +70,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get isha => 'Isha';
+
+  @override
+  String get qiblaLocating => 'Getting location...';
+
+  @override
+  String get qiblaLocationDisabled => 'Location services disabled';
+
+  @override
+  String get qiblaLocationDisabledMessage =>
+      'Enable location services to show the Qibla direction';
+
+  @override
+  String get qiblaPermissionDenied => 'Location permission denied';
+
+  @override
+  String get qiblaPermissionMessage =>
+      'We need your location to calculate the direction to the Kaaba';
+
+  @override
+  String get qiblaOpenSettings => 'Open settings';
+
+  @override
+  String get qiblaUnavailable => 'Compass unavailable';
+
+  @override
+  String get qiblaUnavailableMessage =>
+      'This device does not support compass functionality';
+
+  @override
+  String get qiblaBearing => 'Qibla direction';
+
+  @override
+  String get qiblaDistance => 'to Kaaba';
+
+  @override
+  String get qiblaAccuracy => 'GPS accuracy';
+
+  @override
+  String get qiblaLowAccuracy => 'Low accuracy';
+
+  @override
+  String get qiblaCalibrate =>
+      'Move your phone in a figure 8 to calibrate the compass';
+
+  @override
+  String get qiblaRefresh => 'Refresh';
 }

@@ -20,5 +20,19 @@
   "dhohr": "Dhohr",
   "asr": "Asr",
   "maghrib": "Maghrib",
-  "isha": "Isha"
+  "isha": "Isha",
+  "qiblaLocating": "Hämtar position...",
+  "qiblaLocationDisabled": "Platstjänster avstängda",
+  "qiblaLocationDisabledMessage": "Aktivera platstjänster för att visa Qibla-riktningen",
+  "qiblaPermissionDenied": "Platstjänst nekad",
+  "qiblaPermissionMessage": "Vi behöver din position för att beräkna riktningen till Kaba",
+  "qiblaOpenSettings": "Öppna inställningar",
+  "qiblaUnavailable": "Kompass ej tillgänglig",
+  "qiblaUnavailableMessage": "Denna enhet saknar kompassfunktion",
+  "qiblaBearing": "Qibla-riktning",
+  "qiblaDistance": "till Kaba",
+  "qiblaAccuracy": "GPS-noggrannhet",
+  "qiblaLowAccuracy": "Låg noggrannhet",
+  "qiblaCalibrate": "Rotera telefonen i en åtta för att kalibrera kompassen",
+  "qiblaRefresh": "Uppdatera"
 }
