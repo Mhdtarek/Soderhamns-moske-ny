@@ -122,7 +122,11 @@ final compassHeadingProvider = StreamProvider.autoDispose<double>((ref) {
       }
       controller.add(smoothed!);
     },
-    onError: (error) => controller.addError(error),
+    // swallow errors silently so app doesnt crash
+    // heading just stays null and screen shows compass unavailable
+    onError: (error) {
+      controller.close();
+    },
   );
 
   ref.onDispose(() {
