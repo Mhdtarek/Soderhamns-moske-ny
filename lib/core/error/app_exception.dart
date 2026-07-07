@@ -15,5 +15,6 @@ class CacheException extends AppException {
 }
 
 class ParseException extends AppException {
-  const ParseException() : super('parse_error');
+  const ParseException([String? context])
+      : super(context != null ? 'parse_error: $context' : 'parse_error');
 }
