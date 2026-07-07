@@ -106,31 +106,37 @@ final locationProvider = FutureProvider<Position>((ref) async {
 final compassHeadingProvider = StreamProvider.autoDispose<double>((ref) {
   final controller = StreamController<double>();
   double? smoothed;
+  StreamSubscription? sub;
 
-  final sub = magnetometerEventStream(
-    samplingPeriod: const Duration(milliseconds: 20),
-  ).listen(
-    (event) {
-      // phone flat screen up azimuth from north clockwise
-      final raw = atan2(event.x, event.y) * 180 / pi;
-      final normalized = (raw + 360) % 360;
+  try {
+    sub = magnetometerEventStream(
+      samplingPeriod: const Duration(milliseconds: 20),
+    ).listen(
+      (event) {
+        // phone flat screen up azimuth from north clockwise
+        final raw = atan2(event.x, event.y) * 180 / pi;
+        final normalized = (raw + 360) % 360;
 
-      if (smoothed == null) {
-        smoothed = normalized;
-      } else {
-        smoothed = smoothed! * 0.9 + normalized * 0.1;
-      }
-      controller.add(smoothed!);
-    },
-    // swallow errors silently so app doesnt crash
-    // heading just stays null and screen shows compass unavailable
-    onError: (error) {
-      controller.close();
-    },
-  );
+        if (smoothed == null) {
+          smoothed = normalized;
+        } else {
+          smoothed = smoothed! * 0.9 + normalized * 0.1;
+        }
+        controller.add(smoothed!);
+      },
+      // swallow errors so app doesnt crash just close stream
+      onError: (error) {
+        controller.close();
+      },
+    );
+  } catch (_) {
+    // plugin not ready late init or hot restart
+    // screen shows compass unavailable state
+    controller.close();
+  }
 
   ref.onDispose(() {
-    sub.cancel();
+    sub?.cancel();
     controller.close();
   });
 
