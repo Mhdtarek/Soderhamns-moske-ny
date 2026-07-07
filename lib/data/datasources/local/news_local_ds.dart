@@ -8,13 +8,21 @@ class NewsLocalDs {
   static const _boxName = 'news_cache';
   static const _listKey = 'news_list';
   static const _lastUpdatedKey = 'news_last_updated';
+  static const _schemaVersion = 1;
+  static const _schemaVersionKey = 'news_schema_version';
 
   Box<String>? _box;
   SharedPreferences? _prefs;
 
   Future<void> init() async {
-    _box = await Hive.openBox<String>(_boxName);
     _prefs = await SharedPreferences.getInstance();
+    final storedVersion = _prefs!.getInt(_schemaVersionKey);
+    final boxExists = await Hive.boxExists(_boxName);
+    if (storedVersion != _schemaVersion && boxExists) {
+      await Hive.deleteBoxFromDisk(_boxName);
+    }
+    _box = await Hive.openBox<String>(_boxName);
+    await _prefs!.setInt(_schemaVersionKey, _schemaVersion);
   }
 
   Future<void> _ensureInitialized() async {

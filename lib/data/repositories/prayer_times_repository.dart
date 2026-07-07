@@ -38,9 +38,13 @@ class PrayerTimesRepository {
   }
 
   Future<void> syncFromRemote() async {
+    final buffer = <int, List<PrayerDay>>{};
     for (var month = 1; month <= 12; month++) {
       final data = await remote.getMonth(month);
-      await local.cacheMonth(month, data);
+      buffer[month] = data;
+    }
+    for (final entry in buffer.entries) {
+      await local.cacheMonth(entry.key, entry.value);
     }
   }
 

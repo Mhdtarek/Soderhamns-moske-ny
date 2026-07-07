@@ -103,11 +103,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       });
     });
 
-    final hijriDate = ref.watch(hijriDateProvider);
-    final gregorianDate = ref.watch(gregorianDateProvider);
-    final countdown = ref.watch(nextPrayerCountdownProvider);
     final dailyAyah = ref.watch(dailyAyahProvider);
-    final todayTimes = ref.watch(todayPrayerTimesProvider);
     final newsAsync = ref.watch(newsListProvider);
 
     return Scaffold(
@@ -126,14 +122,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 begin: const Offset(0, 0.06),
                 end: Offset.zero,
               ).animate(_heroSlide),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: _PrayerHeroCard(
-                  gregorianDate: gregorianDate,
-                  hijriDate: hijriDate,
-                  countdown: countdown,
-                  onRetry: () => ref.invalidate(nextPrayerCountdownProvider),
-                ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: _PrayerHeroCard(),
               ),
             ),
           ),
@@ -159,13 +150,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 begin: const Offset(0, 0.06),
                 end: Offset.zero,
               ).animate(_listSlide),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: _PrayerListCard(
-                  todayTimes: todayTimes,
-                  currentPrayerName: countdown.valueOrNull?.currentPrayerName,
-                  onRetry: () => ref.invalidate(todayPrayerTimesProvider),
-                ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: _PrayerListCard(),
               ),
             ),
           ),
@@ -191,23 +178,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
 // ─── Card 1: Prayer Hero ────────────────────────────────────────
 
-class _PrayerHeroCard extends StatelessWidget {
-  const _PrayerHeroCard({
-    required this.gregorianDate,
-    required this.hijriDate,
-    required this.countdown,
-    this.onRetry,
-  });
-
-  final String gregorianDate;
-  final String hijriDate;
-  final AsyncValue<NextPrayerCountdown> countdown;
-  final VoidCallback? onRetry;
+class _PrayerHeroCard extends ConsumerWidget {
+  const _PrayerHeroCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final gold = isDark ? AppColors.goldLight : AppColors.gold;
+    final gregorianDate = ref.watch(gregorianDateProvider);
+    final hijriDate = ref.watch(hijriDateProvider);
+    final countdown = ref.watch(nextPrayerCountdownProvider);
     final data = countdown.valueOrNull;
 
     return Card(
@@ -273,10 +253,10 @@ class _PrayerHeroCard extends StatelessWidget {
               ),
               error: (_, __) => ErrorView(
                 message: 'Kunde inte ladda bönetider',
-                onRetry: onRetry,
+                onRetry: () => ref.invalidate(nextPrayerCountdownProvider),
               ),
-              data: (data) {
-                final hasCurrent = data.currentPrayerName != null;
+              data: (cd) {
+                final hasCurrent = cd.currentPrayerName != null;
 
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,8 +275,8 @@ class _PrayerHeroCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             hasCurrent
-                                ? data.currentPrayerName!
-                                : data.nextPrayerName,
+                                ? cd.currentPrayerName!
+                                : cd.nextPrayerName,
                             style: const TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w500,
@@ -313,7 +293,7 @@ class _PrayerHeroCard extends StatelessWidget {
                       children: [
                         if (hasCurrent)
                           Text(
-                            'Nästa: ${data.nextPrayerName}',
+                            'Nästa: ${cd.nextPrayerName}',
                             style: const TextStyle(
                               fontSize: 12,
                               color: _grey888,
@@ -321,7 +301,7 @@ class _PrayerHeroCard extends StatelessWidget {
                           ),
                         const SizedBox(height: 4),
                         Text(
-                          _formatCountdown(data.remaining),
+                          _formatCountdown(cd.remaining),
                           style: const TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w500,
@@ -342,7 +322,7 @@ class _PrayerHeroCard extends StatelessWidget {
           countdown.when(
             loading: () => const SizedBox(height: 36),
             error: (_, __) => const SizedBox.shrink(),
-            data: (data) {
+            data: (cd) {
               return Container(
                 padding: const EdgeInsets.all(10),
                 decoration: const BoxDecoration(color: _tint),
@@ -354,7 +334,7 @@ class _PrayerHeroCard extends StatelessWidget {
                       TextSpan(
                         children: [
                           TextSpan(
-                            text: data.nextPrayerName,
+                            text: cd.nextPrayerName,
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -362,7 +342,7 @@ class _PrayerHeroCard extends StatelessWidget {
                             ),
                           ),
                           TextSpan(
-                            text: ' kl. ${data.nextPrayerTime}',
+                            text: ' kl. ${cd.nextPrayerTime}',
                             style: const TextStyle(
                               fontSize: 13,
                               color: _grey666,
@@ -373,7 +353,7 @@ class _PrayerHeroCard extends StatelessWidget {
                             style: TextStyle(fontSize: 13, color: _grey666),
                           ),
                           TextSpan(
-                            text: data.nextNextPrayerName,
+                            text: cd.nextNextPrayerName,
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -381,7 +361,7 @@ class _PrayerHeroCard extends StatelessWidget {
                             ),
                           ),
                           TextSpan(
-                            text: ' kl. ${data.nextNextPrayerTime}',
+                            text: ' kl. ${cd.nextNextPrayerTime}',
                             style: const TextStyle(
                               fontSize: 13,
                               color: _grey666,
@@ -475,21 +455,16 @@ class _AyahCard extends StatelessWidget {
 
 // ─── Card 3: Prayer List ────────────────────────────────────────
 
-class _PrayerListCard extends StatelessWidget {
-  const _PrayerListCard({
-    required this.todayTimes,
-    required this.currentPrayerName,
-    this.onRetry,
-  });
-
-  final AsyncValue<PrayerDay> todayTimes;
-  final String? currentPrayerName;
-  final VoidCallback? onRetry;
+class _PrayerListCard extends ConsumerWidget {
+  const _PrayerListCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final gold = isDark ? AppColors.goldLight : AppColors.gold;
+    final todayTimes = ref.watch(todayPrayerTimesProvider);
+    final countdown = ref.watch(nextPrayerCountdownProvider).valueOrNull;
+    final currentPrayerName = countdown?.currentPrayerName;
 
     return todayTimes.when(
       loading: () =>
@@ -497,7 +472,7 @@ class _PrayerListCard extends StatelessWidget {
       error: (_, __) => Card(
         child: ErrorView(
           message: 'Kunde inte ladda bönetider',
-          onRetry: onRetry,
+          onRetry: () => ref.invalidate(todayPrayerTimesProvider),
         ),
       ),
       data: (day) {

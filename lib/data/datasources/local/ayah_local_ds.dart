@@ -9,13 +9,21 @@ class AyahLocalDs {
   static const _boxName = 'ayah_cache';
   static const _ayahKey = 'current_ayah';
   static const _dateKey = 'ayah_date';
+  static const _schemaVersion = 1;
+  static const _schemaVersionKey = 'ayah_schema_version';
 
   late Box<String> _box;
   late SharedPreferences _prefs;
 
   Future<void> init() async {
-    _box = await Hive.openBox<String>(_boxName);
     _prefs = await SharedPreferences.getInstance();
+    final storedVersion = _prefs.getInt(_schemaVersionKey);
+    final boxExists = await Hive.boxExists(_boxName);
+    if (storedVersion != _schemaVersion && boxExists) {
+      await Hive.deleteBoxFromDisk(_boxName);
+    }
+    _box = await Hive.openBox<String>(_boxName);
+    await _prefs.setInt(_schemaVersionKey, _schemaVersion);
   }
 
   Future<void> loadFallback() async {

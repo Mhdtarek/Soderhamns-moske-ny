@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:soderhamns_moske_app/core/config/env.dart';
 import 'package:soderhamns_moske_app/core/error/app_exception.dart';
-import 'package:soderhamns_moske_app/core/router/routes.dart';
 import 'package:soderhamns_moske_app/features/news/providers/news_providers.dart';
 import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
 import 'package:soderhamns_moske_app/shared/widgets/loading_view.dart';
@@ -25,7 +24,7 @@ class NewsDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const BackButtonIcon(),
-          onPressed: () => context.go(Routes.news),
+          onPressed: () => context.pop(),
         ),
         title: Text(detailAsync.valueOrNull?.title ?? 'Nyhet'),
         actions: [

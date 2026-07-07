@@ -37,13 +37,20 @@ final clockTickProvider = StreamProvider.autoDispose<int>((ref) {
   return controller.stream;
 });
 
+final _dailyPrayerCacheProvider =
+    Provider<({PrayerDay today, PrayerDay tomorrow})?>((ref) {
+  final today = ref.watch(todayPrayerTimesProvider).valueOrNull;
+  final tomorrow = ref.watch(tomorrowPrayerTimesProvider).valueOrNull;
+  if (today == null || tomorrow == null) return null;
+  return (today: today, tomorrow: tomorrow);
+});
+
 final nextPrayerCountdownProvider =
     Provider<AsyncValue<NextPrayerCountdown>>((ref) {
   ref.watch(clockTickProvider);
-  final today = ref.watch(todayPrayerTimesProvider).valueOrNull;
-  final tomorrow = ref.watch(tomorrowPrayerTimesProvider).valueOrNull;
-  if (today == null || tomorrow == null) return const AsyncValue.loading();
-  return AsyncValue.data(_calculateNextPrayer(today, tomorrow));
+  final data = ref.watch(_dailyPrayerCacheProvider);
+  if (data == null) return const AsyncValue.loading();
+  return AsyncValue.data(_calculateNextPrayer(data.today, data.tomorrow));
 });
 
 const _prayerOrder = ['Fajr', 'Shuruk', 'Dhohr', 'Asr', 'Maghrib', 'Isha'];
