@@ -86,7 +86,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get qiblaPermissionMessage =>
-      'Vi behöver din position för att beräkna riktningen till Kaba';
+      'Vi behöver din position för att beräkna riktningen till Kaaba';
 
   @override
   String get qiblaOpenSettings => 'Öppna inställningar';
@@ -101,7 +101,13 @@ class AppLocalizationsSv extends AppLocalizations {
   String get qiblaBearing => 'Qibla-riktning';
 
   @override
-  String get qiblaDistance => 'till Kaba';
+  String get qiblaDistance => 'till Kaaba';
+
+  @override
+  String get qiblaTurn => 'Vrid för att rikta';
+
+  @override
+  String get qiblaAligned => 'Riktad';
 
   @override
   String get qiblaAccuracy => 'GPS-noggrannhet';
@@ -112,6 +118,10 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get qiblaCalibrate =>
       'Rotera telefonen i en åtta för att kalibrera kompassen';
+
+  @override
+  String get qiblaInterference =>
+      'Magnetisk störning upptäckt avlägsna dig från metallföremål';
 
   @override
   String get qiblaRefresh => 'Uppdatera';
