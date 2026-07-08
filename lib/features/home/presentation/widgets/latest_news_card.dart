@@ -65,18 +65,11 @@ class LatestNewsCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              for (var i = 0; i < latest.length; i++) ...[
-                if (i > 0)
-                  Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: theme.dividerColor,
-                  ),
+              for (var i = 0; i < latest.length; i++)
                 _HomeNewsRow(
                   post: latest[i],
                   onTap: () => context.push('/nyheter/${latest[i].slug}'),
                 ),
-              ],
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                 child: InkWell(
