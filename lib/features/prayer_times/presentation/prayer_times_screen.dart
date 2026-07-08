@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:soderhamns_moske_app/core/theme/app_colors.dart';
+import 'package:soderhamns_moske_app/data/models/prayer_day.dart';
 import 'package:soderhamns_moske_app/features/prayer_times/providers/prayer_times_providers.dart';
 import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
 import 'package:soderhamns_moske_app/shared/widgets/loading_view.dart';
@@ -35,7 +36,16 @@ class _PrayerTimesScreenState extends ConsumerState<PrayerTimesScreen>
   @override
   Widget build(BuildContext context) {
     final tabIndex = _tabController.index;
-    final asyncDay = ref.watch(dayByTabProvider(tabIndex));
+    final threeDays = ref.watch(threeDaysProvider);
+
+    PrayerDay? day;
+    if (threeDays != null) {
+      day = switch (tabIndex) {
+        0 => threeDays.yesterday,
+        1 => threeDays.today,
+        _ => threeDays.tomorrow,
+      };
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -49,26 +59,24 @@ class _PrayerTimesScreenState extends ConsumerState<PrayerTimesScreen>
           ],
         ),
       ),
-      body: asyncDay.when(
-        data: (day) => ListView(
-          physics: Theme.of(context).platform == TargetPlatform.iOS
-              ? const BouncingScrollPhysics()
-              : null,
-          padding: const EdgeInsets.all(16),
-          children: [
-            PrayerTimesCard(day: day, isToday: tabIndex == 1),
-            const SizedBox(height: 16),
-            const _WeekTable(),
-            const SizedBox(height: 16),
-            const _MonthTable(),
-          ],
-        ),
-        loading: () => const LoadingView(),
-        error: (e, _) => ErrorView(
-          message: 'Kunde inte ladda bönetider',
-          onRetry: () => ref.invalidate(dayByTabProvider(tabIndex)),
-        ),
-      ),
+      body: threeDays == null
+          ? ErrorView(
+              message: 'Kunde inte ladda bönetider',
+              onRetry: () => ref.invalidate(threeDaysProvider),
+            )
+          : ListView(
+              physics: Theme.of(context).platform == TargetPlatform.iOS
+                  ? const BouncingScrollPhysics()
+                  : null,
+              padding: const EdgeInsets.all(16),
+              children: [
+                PrayerTimesCard(day: day!, isToday: tabIndex == 1),
+                const SizedBox(height: 16),
+                const _WeekTable(),
+                const SizedBox(height: 16),
+                const _MonthTable(),
+              ],
+            ),
     );
   }
 }

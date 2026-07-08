@@ -119,7 +119,7 @@ class _NewsListScreenState extends ConsumerState<NewsListScreen> {
       return NewsCard(
         post: recent[index],
         isNew: true,
-        onTap: () => context.go('/nyheter/${recent[index].slug}'),
+        onTap: () => context.push('/nyheter/${recent[index].slug}'),
       );
     }
 
@@ -132,7 +132,7 @@ class _NewsListScreenState extends ConsumerState<NewsListScreen> {
     final post = older[olderIndex];
     return NewsCard(
       post: post,
-      onTap: () => context.go('/nyheter/${post.slug}'),
+      onTap: () => context.push('/nyheter/${post.slug}'),
     );
   }
 
