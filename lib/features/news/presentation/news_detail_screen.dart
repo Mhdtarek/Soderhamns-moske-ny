@@ -19,6 +19,7 @@ class NewsDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detailAsync = ref.watch(newsDetailProvider(slug));
+    final shareKey = GlobalKey();
 
     return Scaffold(
       appBar: AppBar(
@@ -30,12 +31,21 @@ class NewsDetailScreen extends ConsumerWidget {
         actions: [
           if (detailAsync.valueOrNull != null)
             IconButton(
+              key: shareKey,
               icon: const Icon(Icons.share),
               tooltip: 'Dela',
-              onPressed: () => Share.share(
-                '${detailAsync.valueOrNull!.title}\n${Env.prayerApiBase}/nyheter/$slug',
-                subject: detailAsync.valueOrNull!.title,
-              ),
+              onPressed: () {
+                final renderBox =
+                    shareKey.currentContext?.findRenderObject() as RenderBox?;
+                final rect = renderBox != null
+                    ? renderBox.localToGlobal(Offset.zero) & renderBox.size
+                    : null;
+                Share.share(
+                  '${detailAsync.valueOrNull!.title}\n${Env.prayerApiBase}/nyheter/$slug',
+                  subject: detailAsync.valueOrNull!.title,
+                  sharePositionOrigin: rect,
+                );
+              },
             ),
         ],
       ),
