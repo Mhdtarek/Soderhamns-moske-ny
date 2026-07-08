@@ -97,7 +97,9 @@ final locationProvider = FutureProvider<Position>((ref) async {
   }
   return Geolocator.getCurrentPosition(
     locationSettings: const LocationSettings(
-      accuracy: LocationAccuracy.high,
+      // medium is much faster than high on first read
+      // roughly 30 50m accuracy which is plenty for qibla bearing
+      accuracy: LocationAccuracy.medium,
     ),
   );
 });
@@ -113,14 +115,18 @@ final compassHeadingProvider = StreamProvider.autoDispose<double>((ref) {
       samplingPeriod: const Duration(milliseconds: 20),
     ).listen(
       (event) {
-        // phone flat screen up azimuth from north clockwise
-        final raw = atan2(event.x, event.y) * 180 / pi;
+        // phone vertical portrait screen facing user top up
+        // at this orientation x and z are the horizontal axes
+        // atan2(x, -z) gives clockwise heading from north when top of phone points up
+        // using y axis alone would make heading almost unresponsive as y is vertical
+        final raw = atan2(event.x, -event.z) * 180 / pi;
         final normalized = (raw + 360) % 360;
 
         if (smoothed == null) {
           smoothed = normalized;
         } else {
-          smoothed = smoothed! * 0.9 + normalized * 0.1;
+          // lighter smoothing so needle feels snappy
+          smoothed = smoothed! * 0.7 + normalized * 0.3;
         }
         controller.add(smoothed!);
       },
