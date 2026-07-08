@@ -74,7 +74,7 @@ class LatestNewsCard extends ConsumerWidget {
                   ),
                 _HomeNewsRow(
                   post: latest[i],
-                  onTap: () => context.go('/nyheter/${latest[i].slug}'),
+                  onTap: () => context.push('/nyheter/${latest[i].slug}'),
                 ),
               ],
               Padding(
