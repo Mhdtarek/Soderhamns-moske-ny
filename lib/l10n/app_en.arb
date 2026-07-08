@@ -31,8 +31,11 @@
   "qiblaUnavailableMessage": "This device does not support compass functionality",
   "qiblaBearing": "Qibla direction",
   "qiblaDistance": "to Kaaba",
+  "qiblaTurn": "Turn to align",
+  "qiblaAligned": "Aligned",
   "qiblaAccuracy": "GPS accuracy",
   "qiblaLowAccuracy": "Low accuracy",
   "qiblaCalibrate": "Move your phone in a figure 8 to calibrate the compass",
+  "qiblaInterference": "Magnetic interference detected move away from metal objects",
   "qiblaRefresh": "Refresh"
 }

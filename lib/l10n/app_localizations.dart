@@ -284,6 +284,18 @@ abstract class AppLocalizations {
   /// **'to Kaaba'**
   String get qiblaDistance;
 
+  /// No description provided for @qiblaTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn to align'**
+  String get qiblaTurn;
+
+  /// No description provided for @qiblaAligned.
+  ///
+  /// In en, this message translates to:
+  /// **'Aligned'**
+  String get qiblaAligned;
+
   /// No description provided for @qiblaAccuracy.
   ///
   /// In en, this message translates to:
@@ -301,6 +313,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Move your phone in a figure 8 to calibrate the compass'**
   String get qiblaCalibrate;
+
+  /// No description provided for @qiblaInterference.
+  ///
+  /// In en, this message translates to:
+  /// **'Magnetic interference detected move away from metal objects'**
+  String get qiblaInterference;
 
   /// No description provided for @qiblaRefresh.
   ///

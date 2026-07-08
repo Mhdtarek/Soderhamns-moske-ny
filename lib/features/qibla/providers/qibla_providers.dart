@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:sensors_plus/sensors_plus.dart';
 import 'package:soderhamns_moske_app/core/config/constants.dart';
 
 // bearing from one point to another in degrees 0 to 360
@@ -35,7 +35,7 @@ double calculateDistance(
   double lat2,
   double lon2,
 ) {
-  const r = 6371; // earth radius km
+  const r = 6371;
   final toRad = pi / 180;
 
   final dLat = (lat2 - lat1) * toRad;
@@ -49,9 +49,18 @@ double calculateDistance(
   return r * c;
 }
 
-// how much the needle should rotate from top
+// angle between where youre facing and where kaaba is
+// 0 means you are facing straight at it
 double calculateNeedleRotation(double bearing, double heading) {
   return (bearing - heading + 360) % 360;
+}
+
+// magnetometer data with heading and interference flag
+class CompassData {
+  final double heading;
+  final bool interference;
+
+  const CompassData({required this.heading, required this.interference});
 }
 
 // permission status for qibla screen
@@ -63,7 +72,6 @@ enum QiblaPermissionStatus {
   granted,
 }
 
-// checks service and permission then requests if needed
 final permissionProvider =
     FutureProvider<QiblaPermissionStatus>((ref) async {
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -89,7 +97,6 @@ final permissionProvider =
   }
 });
 
-// one shot gps read only runs when permission is granted
 final locationProvider = FutureProvider<Position>((ref) async {
   final status = ref.watch(permissionProvider).valueOrNull;
   if (status != QiblaPermissionStatus.granted) {
@@ -97,49 +104,59 @@ final locationProvider = FutureProvider<Position>((ref) async {
   }
   return Geolocator.getCurrentPosition(
     locationSettings: const LocationSettings(
-      // medium is much faster than high on first read
-      // roughly 30 50m accuracy which is plenty for qibla bearing
       accuracy: LocationAccuracy.medium,
     ),
   );
 });
 
-// magnetometer stream converted to heading degrees with smoothing
-final compassHeadingProvider = StreamProvider.autoDispose<double>((ref) {
-  final controller = StreamController<double>();
+// compass heading via flutter_compass (platform tilt-compensated
+// true/magnetic heading) with shortest-arc smoothing to avoid
+// jitter/spin across the 0/360 boundary.
+final compassHeadingProvider =
+    StreamProvider.autoDispose<CompassData>((ref) {
+  final controller = StreamController<CompassData>();
   double? smoothed;
-  StreamSubscription? sub;
+  StreamSubscription<CompassEvent>? sub;
 
-  try {
-    sub = magnetometerEventStream(
-      samplingPeriod: const Duration(milliseconds: 20),
-    ).listen(
-      (event) {
-        // phone vertical portrait screen facing user top up
-        // at this orientation x and z are the horizontal axes
-        // atan2(x, -z) gives clockwise heading from north when top of phone points up
-        // using y axis alone would make heading almost unresponsive as y is vertical
-        final raw = atan2(event.x, -event.z) * 180 / pi;
-        final normalized = (raw + 360) % 360;
-
-        if (smoothed == null) {
-          smoothed = normalized;
-        } else {
-          // lighter smoothing so needle feels snappy
-          smoothed = smoothed! * 0.7 + normalized * 0.3;
-        }
-        controller.add(smoothed!);
-      },
-      // swallow errors so app doesnt crash just close stream
-      onError: (error) {
-        controller.close();
-      },
-    );
-  } catch (_) {
-    // plugin not ready late init or hot restart
-    // screen shows compass unavailable state
+  final stream = FlutterCompass.events;
+  if (stream == null) {
+    // compass hardware not available on this device
     controller.close();
+    return controller.stream;
   }
+
+  sub = stream.listen(
+    (event) {
+      final heading = event.heading;
+      if (heading == null) {
+        // android reports null when no sensor is available
+        return;
+      }
+      final raw = (heading + 360) % 360;
+
+      if (smoothed == null) {
+        smoothed = raw;
+      } else {
+        // shortest angular difference so the dial takes the shorter
+        // path around the circle even across 0/360
+        final diff = ((raw - smoothed! + 540) % 360) - 180;
+        smoothed = (smoothed! + diff * 0.2 + 360) % 360;
+      }
+
+      // accuracy is in degrees (iOS) / platform-dependent (android).
+      // high value = unreliable, treat as magnetic interference.
+      final acc = event.accuracy;
+      final interference = acc != null && acc > 15;
+
+      controller.add(CompassData(
+        heading: smoothed!,
+        interference: interference,
+      ));
+    },
+    onError: (error) {
+      controller.close();
+    },
+  );
 
   ref.onDispose(() {
     sub?.cancel();
@@ -149,7 +166,6 @@ final compassHeadingProvider = StreamProvider.autoDispose<double>((ref) {
   return controller.stream;
 });
 
-// bearing to kaaba from current location
 final qiblaBearingProvider = Provider<double>((ref) {
   final pos = ref.watch(locationProvider).valueOrNull;
   if (pos == null) return 0;
@@ -161,7 +177,6 @@ final qiblaBearingProvider = Provider<double>((ref) {
   );
 });
 
-// distance to kaaba from current location
 final qiblaDistanceProvider = Provider<double>((ref) {
   final pos = ref.watch(locationProvider).valueOrNull;
   if (pos == null) return 0;
@@ -171,11 +186,4 @@ final qiblaDistanceProvider = Provider<double>((ref) {
     AppConstants.kaabaLatitude,
     AppConstants.kaabaLongitude,
   );
-});
-
-// final needle rotation combining bearing and heading
-final needleRotationProvider = Provider<double>((ref) {
-  final bearing = ref.watch(qiblaBearingProvider);
-  final heading = ref.watch(compassHeadingProvider).valueOrNull ?? 0;
-  return calculateNeedleRotation(bearing, heading);
 });

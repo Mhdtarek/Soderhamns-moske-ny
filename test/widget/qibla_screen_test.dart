@@ -90,11 +90,17 @@ class _TestLocalizations extends AppLocalizations {
   @override
   String get qiblaDistance => 'to Kaaba';
   @override
+  String get qiblaTurn => 'Turn to align';
+  @override
+  String get qiblaAligned => 'Aligned';
+  @override
   String get qiblaAccuracy => 'GPS accuracy';
   @override
   String get qiblaLowAccuracy => 'Low accuracy';
   @override
   String get qiblaCalibrate => 'Calibrate';
+  @override
+  String get qiblaInterference => 'Interference';
   @override
   String get qiblaRefresh => 'Refresh';
 }
@@ -154,7 +160,7 @@ void main() {
   testWidgets('granted with heading null shows compass unavailable',
       (tester) async {
     // stream that never emits so heading stays null
-    final neverController = StreamController<double>();
+    final neverController = StreamController<CompassData>();
     addTearDown(neverController.close);
 
     await tester.pumpWidget(_wrapApp([
@@ -172,7 +178,7 @@ void main() {
     await tester.pumpWidget(_wrapApp([
       permissionProvider.overrideWith((ref) async => QiblaPermissionStatus.granted),
       locationProvider.overrideWith((ref) async => _testPosition),
-      compassHeadingProvider.overrideWith((ref) => Stream.value(90.0)),
+      compassHeadingProvider.overrideWith((ref) => Stream.value(const CompassData(heading: 90.0, interference: false))),
     ]));
     await tester.pumpAndSettle();
 
@@ -180,6 +186,17 @@ void main() {
     expect(find.byType(CompassWidget), findsOneWidget);
     // bearing text should show
     expect(find.text('Qibla direction'), findsOneWidget);
+  });
+
+  testWidgets('interference shows warning banner', (tester) async {
+    await tester.pumpWidget(_wrapApp([
+      permissionProvider.overrideWith((ref) async => QiblaPermissionStatus.granted),
+      locationProvider.overrideWith((ref) async => _testPosition),
+      compassHeadingProvider.overrideWith((ref) => Stream.value(const CompassData(heading: 90.0, interference: true))),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Interference'), findsOneWidget);
   });
 
   testWidgets('low accuracy shows warning banner', (tester) async {
@@ -199,10 +216,24 @@ void main() {
     await tester.pumpWidget(_wrapApp([
       permissionProvider.overrideWith((ref) async => QiblaPermissionStatus.granted),
       locationProvider.overrideWith((ref) async => lowAccPosition),
-      compassHeadingProvider.overrideWith((ref) => Stream.value(90.0)),
+      compassHeadingProvider.overrideWith((ref) => Stream.value(const CompassData(heading: 90.0, interference: false))),
     ]));
     await tester.pumpAndSettle();
 
     expect(find.text('Low accuracy'), findsOneWidget);
+  });
+
+  testWidgets('turn-to-align card shows aligned when heading matches bearing',
+      (tester) async {
+    await tester.pumpWidget(_wrapApp([
+      permissionProvider.overrideWith((ref) async => QiblaPermissionStatus.granted),
+      locationProvider.overrideWith((ref) async => _testPosition),
+      compassHeadingProvider.overrideWith((ref) => Stream.value(const CompassData(heading: 148.0, interference: false))),
+      // stockholm bearing to kaaba is ~148; override bearing to match
+      qiblaBearingProvider.overrideWith((ref) => 148.0),
+    ]));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Aligned'), findsOneWidget);
   });
 }

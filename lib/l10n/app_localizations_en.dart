@@ -105,6 +105,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get qiblaDistance => 'to Kaaba';
 
   @override
+  String get qiblaTurn => 'Turn to align';
+
+  @override
+  String get qiblaAligned => 'Aligned';
+
+  @override
   String get qiblaAccuracy => 'GPS accuracy';
 
   @override
@@ -113,6 +119,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get qiblaCalibrate =>
       'Move your phone in a figure 8 to calibrate the compass';
+
+  @override
+  String get qiblaInterference =>
+      'Magnetic interference detected move away from metal objects';
 
   @override
   String get qiblaRefresh => 'Refresh';
