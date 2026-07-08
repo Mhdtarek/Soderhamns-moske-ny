@@ -38,15 +38,16 @@ final tomorrowPrayerTimesProvider = FutureProvider<PrayerDay>((ref) async {
   return ref.watch(prayerTimesRepositoryProvider).getTomorrow();
 });
 
-final dayByTabProvider = FutureProvider.family<PrayerDay, int>((ref, index) async {
-  final repo = ref.watch(prayerTimesRepositoryProvider);
-  switch (index) {
-    case 0:
-      return repo.getYesterday();
-    case 1:
-      return repo.getToday();
-    default:
-      return repo.getTomorrow();
+final threeDaysProvider = Provider<({PrayerDay yesterday, PrayerDay today, PrayerDay tomorrow})?>((ref) {
+  try {
+    final repo = ref.watch(prayerTimesRepositoryProvider);
+    return (
+      yesterday: repo.getYesterday(),
+      today: repo.getToday(),
+      tomorrow: repo.getTomorrow(),
+    );
+  } catch (_) {
+    return null;
   }
 });
 
