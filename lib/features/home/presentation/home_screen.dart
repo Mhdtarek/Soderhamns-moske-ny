@@ -12,17 +12,6 @@ import 'package:soderhamns_moske_app/features/prayer_times/providers/prayer_time
 import 'package:soderhamns_moske_app/shared/widgets/error_view.dart';
 import 'package:soderhamns_moske_app/shared/widgets/loading_view.dart';
 
-const _grey888 = Color(0xFF888888);
-const _grey555 = Color(0xFF555555);
-const _grey333 = Color(0xFF333333);
-const _grey666 = Color(0xFF666666);
-const _dark = Color(0xFF2C2A22);
-const _green = Color(0xFF4A7C59);
-const _dividerLight = Color(0x1A000000);
-const _dividerMedium = Color(0x12000000);
-const _tint = Color(0x05000000);
-const _activeBg = Color(0xFFF5F0E4);
-
 const _prayerOrder = ['Fajr', 'Shuruk', 'Dhohr', 'Asr', 'Maghrib', 'Isha'];
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -183,12 +172,10 @@ class _PrayerHeroCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final gold = isDark ? AppColors.goldLight : AppColors.gold;
+    final c = _Palette(Theme.of(context).brightness == Brightness.dark);
     final gregorianDate = ref.watch(gregorianDateProvider);
     final hijriDate = ref.watch(hijriDateProvider);
     final countdown = ref.watch(nextPrayerCountdownProvider);
-    final data = countdown.valueOrNull;
 
     return Card(
       child: Column(
@@ -206,43 +193,24 @@ class _PrayerHeroCard extends ConsumerWidget {
                   children: [
                     Text(
                       gregorianDate,
-                      style: const TextStyle(fontSize: 12, color: _grey888),
+                      style: TextStyle(fontSize: 12, color: c.faintText),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       hijriDate,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: _grey555,
+                        color: c.mutedText,
                       ),
                     ),
                   ],
                 ),
                 const Spacer(),
-                if (data?.currentPrayerName != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: gold,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Be nu!',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.black : Colors.white,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
-          const Divider(height: 1, thickness: 0.5, color: _dividerLight),
+          Divider(height: 1, thickness: 0.5, color: c.divider),
           // Zone 2 — Current prayer + countdown
           Padding(
             padding: const EdgeInsets.all(12),
@@ -267,9 +235,9 @@ class _PrayerHeroCard extends ConsumerWidget {
                         children: [
                           Text(
                             hasCurrent ? 'Aktuell bön' : 'Nästa bön',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: _grey888,
+                              color: c.faintText,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -277,10 +245,10 @@ class _PrayerHeroCard extends ConsumerWidget {
                             hasCurrent
                                 ? cd.currentPrayerName!
                                 : cd.nextPrayerName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w500,
-                              color: _dark,
+                              color: c.primaryText,
                               height: 1,
                             ),
                           ),
@@ -291,22 +259,21 @@ class _PrayerHeroCard extends ConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        if (hasCurrent)
-                          Text(
-                            'Nästa: ${cd.nextPrayerName}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: _grey888,
-                            ),
+                        Opacity(
+                          opacity: 0,
+                          child: Text(
+                            'Aktuell bön',
+                            style: TextStyle(fontSize: 11, color: c.faintText),
                           ),
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           _formatCountdown(cd.remaining),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w500,
-                            color: _green,
-                            fontFeatures: [FontFeature.tabularFigures()],
+                            color: c.accent,
+                            fontFeatures: const [FontFeature.tabularFigures()],
                             height: 1,
                           ),
                         ),
@@ -317,7 +284,7 @@ class _PrayerHeroCard extends ConsumerWidget {
               },
             ),
           ),
-          const Divider(height: 1, thickness: 0.5, color: _dividerLight),
+          Divider(height: 1, thickness: 0.5, color: c.divider),
           // Zone 3 — Next prayers hint
           countdown.when(
             loading: () => const SizedBox(height: 36),
@@ -325,46 +292,46 @@ class _PrayerHeroCard extends ConsumerWidget {
             data: (cd) {
               return Container(
                 padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(color: _tint),
+                decoration: BoxDecoration(color: c.tint),
                 child: Row(
                   children: [
-                    const Icon(Icons.access_time, size: 14, color: _grey888),
+                    Icon(Icons.access_time, size: 14, color: c.faintText),
                     const SizedBox(width: 8),
                     Text.rich(
                       TextSpan(
                         children: [
                           TextSpan(
                             text: cd.nextPrayerName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: _grey333,
+                              color: c.strongMuted,
                             ),
                           ),
                           TextSpan(
                             text: ' kl. ${cd.nextPrayerTime}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: _grey666,
+                              color: c.mutedText,
                             ),
                           ),
-                          const TextSpan(
+                          TextSpan(
                             text: ', sedan ',
-                            style: TextStyle(fontSize: 13, color: _grey666),
+                            style: TextStyle(fontSize: 13, color: c.mutedText),
                           ),
                           TextSpan(
                             text: cd.nextNextPrayerName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: _grey333,
+                              color: c.strongMuted,
                             ),
                           ),
                           TextSpan(
                             text: ' kl. ${cd.nextNextPrayerTime}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: _grey666,
+                              color: c.mutedText,
                             ),
                           ),
                         ],
@@ -398,6 +365,8 @@ class _AyahCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final c = _Palette(isDark);
     return Card(
       child: dailyAyah.when(
         loading: () => const SizedBox(height: 60, child: LoadingView()),
@@ -426,7 +395,7 @@ class _AyahCard extends StatelessWidget {
                     child: Text(
                       ayah.translation,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: _grey666,
+                        color: c.mutedText,
                         height: 1.6,
                         fontSize: 12,
                       ),
@@ -439,7 +408,7 @@ class _AyahCard extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: Text(
                         '${ayah.surahEnglishName} ${ayah.surahNumber}:${ayah.numberInSurah}',
-                        style: const TextStyle(fontSize: 11, color: _grey888),
+                        style: TextStyle(fontSize: 11, color: c.faintText),
                       ),
                     ),
                   ),
@@ -461,7 +430,7 @@ class _PrayerListCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final gold = isDark ? AppColors.goldLight : AppColors.gold;
+    final c = _Palette(isDark);
     final todayTimes = ref.watch(todayPrayerTimesProvider);
     final countdown = ref.watch(nextPrayerCountdownProvider).valueOrNull;
     final currentPrayerName = countdown?.currentPrayerName;
@@ -485,6 +454,10 @@ class _PrayerListCard extends ConsumerWidget {
           'Isha': day.isha,
         };
 
+        final passedColor = isDark ? const Color(0xFF6B6657) : const Color(0xFFBBBBBB);
+        final passedTimeColor =
+            isDark ? const Color(0xFF7A7567) : const Color(0xFFCCCCCC);
+
         final List<Widget> rows = [];
         for (var i = 0; i < _prayerOrder.length; i++) {
           final name = _prayerOrder[i];
@@ -497,7 +470,12 @@ class _PrayerListCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 16),
               decoration: isCurrent
-                  ? const BoxDecoration(color: _activeBg)
+                  ? BoxDecoration(
+                      color: c.gold.withValues(alpha: 0.15),
+                      border: Border(
+                        left: BorderSide(color: c.gold, width: 4),
+                      ),
+                    )
                   : null,
               child: Row(
                 children: [
@@ -507,15 +485,15 @@ class _PrayerListCard extends ConsumerWidget {
                       fontSize: 14,
                       fontWeight: isCurrent ? FontWeight.w500 : null,
                       color: isPassed
-                          ? const Color(0xFFBBBBBB)
+                          ? passedColor
                           : isCurrent
-                          ? _dark
-                          : _grey333,
+                              ? c.primaryText
+                              : c.strongMuted,
                     ),
                   ),
                   const SizedBox(width: 6),
                   if (isPassed)
-                    const Icon(Icons.check, size: 14, color: _grey888),
+                    Icon(Icons.check, size: 14, color: c.faintText),
                   if (isCurrent)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -523,7 +501,7 @@ class _PrayerListCard extends ConsumerWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: gold,
+                        color: c.gold,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -538,7 +516,7 @@ class _PrayerListCard extends ConsumerWidget {
                   if (isUpcoming)
                     Text(
                       _timeRemaining(time),
-                      style: const TextStyle(fontSize: 11, color: _grey888),
+                      style: TextStyle(fontSize: 11, color: c.faintText),
                     ),
                   const Spacer(),
                   Text(
@@ -547,10 +525,10 @@ class _PrayerListCard extends ConsumerWidget {
                       fontSize: 14,
                       fontWeight: isCurrent ? FontWeight.w500 : null,
                       color: isPassed
-                          ? const Color(0xFFCCCCCC)
+                          ? passedTimeColor
                           : isCurrent
-                          ? _dark
-                          : _grey555,
+                              ? c.primaryText
+                              : c.mutedText,
                       fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
@@ -561,7 +539,7 @@ class _PrayerListCard extends ConsumerWidget {
 
           if (i < _prayerOrder.length - 1) {
             rows.add(
-              const Divider(height: 1, thickness: 0.5, color: _dividerMedium),
+              Divider(height: 1, thickness: 0.5, color: c.dividerMedium),
             );
           }
         }
@@ -596,4 +574,22 @@ class _PrayerListCard extends ConsumerWidget {
     if (hours > 0) return '${hours}h';
     return '${diff.inMinutes}m';
   }
+}
+
+class _Palette {
+  final bool isDark;
+  const _Palette(this.isDark);
+
+  Color get primaryText =>
+      isDark ? AppColors.darkText : const Color(0xFF2C2A22);
+  Color get strongMuted => isDark ? const Color(0xFFC6BFAE) : const Color(0xFF333333);
+  Color get mutedText => isDark ? const Color(0xFFAA9F8A) : const Color(0xFF555555);
+  Color get faintText => isDark ? const Color(0xFF8A8578) : const Color(0xFF888888);
+  Color get divider => isDark ? const Color(0x1AFFFFFF) : const Color(0x1A000000);
+  Color get dividerMedium =>
+      isDark ? const Color(0x12FFFFFF) : const Color(0x12000000);
+  Color get tint => isDark ? const Color(0x05FFFFFF) : const Color(0x05000000);
+  Color get gold => isDark ? AppColors.goldLight : AppColors.gold;
+  Color get accent =>
+      isDark ? AppColors.accentGreenLight : AppColors.accentGreen;
 }
